@@ -1,0 +1,29 @@
+# Godot 4+ specific ignores
+# （涵盖编辑器缓存、import 产物、mono 构建临时目录 .godot/mono/temp、
+#   uid_cache.bin、export_credentials.cfg 等）
+.godot/
+/android/
+
+# Godot 自动生成的 CSV 翻译缓存（如将来引入）
+*.translation
+
+# .NET 构建产物（正常经 Godot.NET.Sdk 输出到 .godot/mono/temp，
+# 但直接用 IDE/命令行构建 csproj 时可能在根目录生成）
+bin/
+obj/
+
+# IDE（含本机绝对路径配置，不入库）
+.idea/
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.DotSettings.user
+
+# 操作系统垃圾文件
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# .NET/Mono 崩溃转储
+mono_crash.*.json
