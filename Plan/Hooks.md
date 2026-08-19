@@ -177,8 +177,37 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 
 ---
 
-## 6. 遗留注意事项
+## 6. 商店扩展（功能块 C：商店附魔遗物专属栏位）
 
+实现文件：`Scripts/Patches/ShopInventoryPatch.cs`（数据侧）、`Scripts/Patches/ShopUiPatch.cs`（UI 侧）；遗物池 `Scripts/Relics/ShopEnchantRelicPool.cs`（`TypeListRelicPoolModel` + `[RegisterSharedRelicPool]`，遗物用 `[RegisterRelic(typeof(ShopEnchantRelicPool))]` 入池）。
+
+### 遗物池机制结论（重要）
+
+- **常规掉落抓袋 `RelicGrabBag.Populate` 只读 `SharedRelicPool` + 角色池**（`RelicGrabBag.cs`），自定义共享池遗物天然不进战斗掉落/宝箱/原生商店栏位——"商店专属"无需额外屏蔽。
+- 原版单局去重靠抓袋"抽取即移除"（`RelicFactory.PullNext*` + `RelicCmd.Obtain` 二次移除）；绕开抓袋、每次 `ToMutable()` 新实例即可**单局重复获得**同一遗物。
+- `RelicModel.Pool` 是反向查找 `ModelDb.AllRelicPools`（硬编码列表，RitsuLib `AllRelicPoolsPatch` 追加 Mod 池）——自定义池必须走 `[RegisterSharedRelicPool]`，否则访问 `Pool` 抛异常。
+- 稀有度权重硬编码在 `RelicFactory.RollRarity(Rng)`：50% Common / 33% Uncommon / 17% Rare；商店遗物定价 `RelicModel.MerchantCost`（virtual）：Common 175 / Uncommon 225 / Rare 275 / Shop 200。
+
+### 商店库存（MerchantInventory）
+
+- 创建点：`MerchantRoom.EnterInternal` → `MerchantInventory.CreateForNormalMerchant(Player)`（每玩家一份）。本 Mod postfix 此方法，用 `AddRelicEntry(MerchantRelicEntry)`（public）追加条目。
+- `MerchantRelicEntry(RelicModel, Player)` 构造器直接售卖指定遗物：不查重、不碰抓袋；`CalcCost` 用 `PlayerRng.Shops` 浮动 ±15%；购买后默认 `ClearAfterPurchase`（栏位隐藏、不补货）。
+- **存档兼容**：商店库存不序列化，读档后重进房间重新生成；存档发生在进房间前且 `PlayerRng.Shops` 已序列化——postfix 中全部随机走 `PlayerRng.Shops` 即确定性重放，栏位读档前后一致，多人各端一致。
+- 追加的条目未订阅 `PurchaseCompleted → UpdateEntries`（private）：仅"买本池遗物不触发全店刷新"这一次要行为缺失，反向刷新正常。
+
+### 商店 UI（NMerchantInventory）
+
+- `NMerchantInventory.Initialize(inventory, dialogue)` 按索引把 `RelicEntries[k]` 绑定到 `%Relics` 容器第 k 个 `NMerchantRelic` 子节点，**栏位数由场景预置子节点数决定**（原版 3 个；条目多于节点会 `GetChild(k)` 越界）。本 Mod 在 Initialize 的 prefix 按"条目数 - 节点数"补齐节点，绑定/购买/售出隐藏（`UpdateVisual`：`Model == null` → 隐藏栏位）全走原生路径。
+- 栏位坐标烘焙在 `merchant_room.tscn`（C# 不可见）：新行位置从现有栏位 GlobalPosition 推算（新行 Y = 药水行 Y + 行距，X 与遗物行对齐）；货架开/关动画只是 `%SlotsContainer` 的 y 在 80/-1000 间 Tween。
+- 复制栏位节点三级兜底：`SceneFilePath` 实例化 → `Duplicate()`（Initialize 前 `_relicNode` 为 null，无悬空图标引用；Duplicate 重映射子树 Owner，唯一名可解析）→ 手工构建（子节点 `%Hitbox` NClickableControl / `%CostLabel` MegaLabel / `%RelicHolder` Control，`UniqueNameInOwner = true` + `Owner = 栏位根`，并 `Set("_iconSize", NRelic.IconSize.Large)`）。
+- `GetAllSlots()` 自动纳入 `%Relics` 下所有 `NMerchantRelic`（焦点转移、默认焦点等）；`UpdateNavigation`（protected virtual，可补丁）把遗物容器所有栏位与无色卡牌当同一行链焦点，新增独立行需 postfix 修正（按 GlobalPosition 就近计算，不依赖索引）。
+- 栏位 `_Ready` 在 AddChild 时触发：`ConnectSignals()` 需要 `%Hitbox`；`NMerchantSlot.Initialize(rug)` 订阅 `Player.GoldChanged` 刷新价格颜色。
+
+---
+
+## 7. 遗留注意事项
+
+- **商店栏位实机验证**：商店附魔遗物池暂无遗物（功能休眠）；向池中加入遗物后需实机检查：3 个栏位在药水下方、同店不重复、跨商店可重复、购买/售出隐藏正常、读档后栏位内容不变。栏位坐标烘焙在 tscn 中，若新行超出屏幕需调整 `ShopUiSlotsPatch` 的行距推算。
 - **附魔移除不回滚**：`ClearEnchantmentInternal` 只解除引用，`OnEnchant` 加的关键词/费用修改会残留。功能块 D（驱散之泉事件）实现移除时，需自行 `RemoveKeyword` / 重置费用（参考 `CardModel.DowngradeInternal` 的重置+重放模式）。
 - **Stick 与重放的交互**：重放序列中每次打出都会计数，次数用尽后当次序列的后续打出不再回手（符合"前 Amount 次"语义）。
 - **Weakening/Serrated 与自指目标**：攻击牌目标默认为敌人；若未来出现 `TargetType.Self` 的攻击牌，`cardPlay.Target` 可能是友方，届时需加目标阵营判断。

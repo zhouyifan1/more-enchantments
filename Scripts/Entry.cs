@@ -1,6 +1,7 @@
 using System.Reflection;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
+using MoreEnchantments.Scripts.Patches;
 using STS2RitsuLib;
 using STS2RitsuLib.Interop;
 using STS2RitsuLib.Patching.Core;
@@ -35,7 +36,13 @@ public class Entry
         // var limitPatcher = RitsuLibFramework.CreatePatcher(ModId, "enchantment-limit");
 
         // 商店扩展补丁——独立 patcher，失败只关闭商店功能（功能块 C）
-        // var shopPatcher = RitsuLibFramework.CreatePatcher(ModId, "shop");
+        var shopPatcher = RitsuLibFramework.CreatePatcher(ModId, "shop");
+        shopPatcher.RegisterPatch<ShopInventoryPatch>();
+        shopPatcher.RegisterPatch<ShopUiSlotsPatch>();
+        shopPatcher.RegisterPatch<ShopUiNavigationPatch>();
+        // 非关键补丁，失败仅降级为「无专属栏位」
+        if (!shopPatcher.PatchAll())
+            Logger.Error("Shop patches failed; enchant relic shop slots are disabled.");
 
         Logger.Info("MoreEnchantments initialized!");
     }
