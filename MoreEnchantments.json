@@ -2,9 +2,9 @@
   "id": "MoreEnchantments",
   "name": "更多附魔",
   "author": "W1NG",
-  "description": "加入更多附魔、与附魔相关的遗物和事件、商店附魔遗物栏位、附魔栏位上限扩展，以及一个特殊房间：附魔室",
+  "description": "加入更多附魔、与附魔相关的遗物和事件、商店附魔遗物栏位、附魔栏位上限扩展",
   "version": "0.1.0",
-  "min_game_version": "0.110.1",
+  "min_game_version": "0.111.0",
   "has_pck": true,
   "has_dll": true,
   "dependencies": [

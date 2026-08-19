@@ -29,18 +29,18 @@
 
 | Hook | 定义于 | 使用位置 | 用途 |
 | --- | --- | --- | --- |
-| `CanEnchantCardType(CardType)` | EnchantmentModel | Heavy/Stick/BurntOut/Weakening/Serrated | 按卡牌类型限制附着 |
+| `CanEnchantCardType(CardType)` | EnchantmentModel | Heavy/Stick/BurntOut/Weakening/Serrated/Poisoned/Cursed | 按卡牌类型限制附着 |
 | `CanEnchant(CardModel)` | EnchantmentModel | Resilience/BurntOut | 按卡牌属性限制附着 |
 | `OnEnchant()` | EnchantmentModel | Resilience/Heavy/BurntOut | 附魔应用时修改卡牌（关键词/费用） |
-| `OnPlay(choiceContext, cardPlay)` | EnchantmentModel | Tactics/Reaction/Weakening/Serrated | 卡牌打出时触发 |
+| `OnPlay(choiceContext, cardPlay)` | EnchantmentModel | Tactics/Reaction/Weakening/Serrated/Sacrifice/Electric/Forge | 卡牌打出时触发 |
 | `EnchantDamageMultiplicative(decimal, ValueProp)` | EnchantmentModel | Heavy | 伤害乘算修改 |
 | `EnchantPlayCount(int)` | EnchantmentModel | BurntOut | 修改打出次数（重放） |
 | `ShowAmount` / `HasExtraCardText` | EnchantmentModel | 全部 | 数值角标 / 追加卡牌文本开关 |
 | `DisplayAmount` | EnchantmentModel | Stick | 角标显示值覆写（实时倒数剩余次数） |
-| `ExtraHoverTips` | EnchantmentModel | Resilience/BurntOut/Weakening/Serrated | 额外悬停提示 |
+| `ExtraHoverTips` | EnchantmentModel | Resilience/BurntOut/Weakening/Serrated/Tactics/Reaction/Poisoned/Sacrifice/Cursed/Electric/Forge | 额外悬停提示 |
 | `AfterFlush(choiceContext, player, flushed, retained)` | AbstractModel | Resilience | 回合结束弃牌/保留结算后 |
 | `AfterCardPlayed(choiceContext, cardPlay)` | AbstractModel | Stick | 任意卡牌打出后（计数） |
-| `AfterPlayerTurnStart(choiceContext, player)` | AbstractModel | Tactics/Reaction | 玩家回合开始时结算 |
+| `AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource)` | AbstractModel | Poisoned/Cursed | 任意模型造成伤害后（按 cardSource 过滤本牌） |
 | `ModifyCardPlayResultLocation(card, isAutoPlay, resources, location)` | AbstractModel | Stick | 改写卡牌打出后的去向 |
 
 ---
@@ -89,6 +89,7 @@
 2. `OnEnchant()` 里把变量同步为初始值（`DynamicVars["Returns"].BaseValue = Amount`——此时 Amount 已被赋值；降级/读档重放 `OnEnchant` 也会自动复位）；
 3. 战斗钩子中更新 `DynamicVars["Returns"].BaseValue`，卡牌下次重绘（回手/换堆等）即显示新值。
 - Stick 用此模式实现"下{Returns}次打出时回到手牌"逐次递减。变量值随 `DeepCloneFields` 克隆传递，只影响战斗克隆体。
+- 派生数值同理：Sacrifice 用 `IntVar("StrengthGain")` 在 `OnEnchant` 同步为 `2 * Amount`，卡面直接展示最终力量值（`{StrengthGain}`），效果结算时也读该变量，避免文本写 `{Amount}×2` 这类无法求值的表达式。
 
 ---
 
@@ -104,10 +105,17 @@
 - Stick：每场战斗计数（`_playsThisCombat` 普通字段，克隆机制保证每场归零，见 §0.3），用尽后 `Status = EnchantmentStatus.Disabled`（图标置灰）。
 - 同族钩子：`BeforeCardPlayed` / `AfterCardPlayedLate`。
 
-### `AfterPlayerTurnStart(PlayerChoiceContext, Player player)`
-指定玩家的回合开始时触发。
-- Tactics/Reaction：`OnPlay` 里累加 `_pendingTriggers`，此处结算并清零（`Amount * _pendingTriggers`，同回合多次打出可叠加）。
-- 同族钩子：`AfterPlayerTurnStartEarly` / `AfterPlayerTurnStartLate`、`Before/AfterSideTurnXxx`（回合双方）。
+### `AfterDamageGiven(PlayerChoiceContext, Creature? dealer, DamageResult result, ValueProp props, Creature target, CardModel? cardSource)`
+任意模型造成伤害后触发（全模型广播）。附魔实现"这张牌造成伤害时……"效果的挂点，参考原版状态 EnvenomPower / ReaperFormPower。
+- **必须过滤 `cardSource == Card`**：原版状态用 `dealer == Owner` 即可，但附魔挂在卡上时只要卡处于战斗牌堆就接收 Hook，不过滤会变成"持卡即生效"的全局光环。
+- Poisoned：再叠 `props.IsPoweredAttack() && result.UnblockedDamage > 0`，对 `target` 施加 `PoisonPower × Amount`（多段伤害逐段触发）。
+- Cursed：用 `result.TotalDamage`（含格挡前的总伤害）作为灾厄施加量，参考 ReaperFormPower。
+- `DamageResult` 在 `MegaCrit.Sts2.Core.Entities.Creatures` 命名空间。
+
+### ~~`AfterPlayerTurnStart`~~ → 改用原版"下回合"状态（经验记录）
+Tactics/Reaction 曾用 `OnPlay` 计数 + `AfterPlayerTurnStart` 自管结算，已重写为打出时施加原版状态：
+`EnergyNextTurnPower`（参考卡牌 ChargeBattery）/ `DrawCardsNextTurnPower`（参考卡牌 Predator）。
+**教训：游戏已有现成状态/机制时优先复用**——层数叠加、结算顺序、存档、UI 图标全部由原版处理，无需自管 per-combat 计数字段。
 
 ### `ModifyCardPlayResultLocation(CardModel card, bool isAutoPlay, ResourceInfo resources, CardLocation cardLocation)`
 Modify 类钩子：改写卡牌打出后的去向，返回新位置。
@@ -121,15 +129,16 @@ Modify 类钩子：改写卡牌打出后的去向，返回新位置。
 
 | API | 用途 | 使用位置 |
 | --- | --- | --- |
-| `PlayerCmd.GainEnergy(decimal amount, Player player)` | 获得费用 | Tactics |
-| `CardPileCmd.Draw(choiceContext, count, player)` | 抽牌 | Reaction |
-| `PowerCmd.Apply<TPower>(choiceContext, target/IEnumerable<Creature>, amount, applier, cardSource)` | 施加能力层数 | Weakening/Serrated |
+| `PowerCmd.Apply<TPower>(choiceContext, target/IEnumerable<Creature>, amount, applier, cardSource)` | 施加能力层数 | Weakening/Serrated/Tactics/Reaction/Poisoned/Sacrifice/Cursed |
+| `CreatureCmd.Damage(choiceContext, target, amount, ValueProp.Unblockable \| Unpowered \| Move, cardSource, cardPlay)` | "失去生命"的标准实现（绕过格挡与力量，参考卡牌 Bloodletting） | Sacrifice |
+| `OrbCmd.Channel<TOrb>(choiceContext, player)` | 生成充能球（参考卡牌 Zap） | Electric |
+| `ForgeCmd.Forge(amount, player, source)` | 铸造（参考卡牌 TheSmith） | Forge |
 | `Card.EnergyCost.SetCustomBaseCost(int)` / `GetWithModifiers(CostModifiers.None)` | 读/改卡牌基础费用 | Heavy |
 | `Card.DynamicVars.TryGetValue("Block", out var)` / `ContainsKey` | 安全访问动态变量（`DynamicVarSet` 实现 `IReadOnlyDictionary`） | Resilience |
-| `DynamicVar.BaseValue`（setter） | 修改数值变量基础值（自动刷新预览值） | Resilience |
+| `DynamicVar.BaseValue`（setter） | 修改数值变量基础值（自动刷新预览值） | Resilience/Stick |
 | `EnchantmentStatus.Normal / Disabled` | 附魔状态：置灰图标、隐藏追加文本 | Stick（Glam 同用法） |
 | `Card.CombatState.HittableEnemies` | 当前全体可攻击敌人 | Weakening/Serrated |
-| `HoverTipFactory.FromKeyword / FromPower<T> / Static(StaticHoverTip.X)` | 悬停提示工厂 | 各附魔 |
+| `HoverTipFactory.FromKeyword / FromPower<T> / FromOrb<T> / FromForge() / Static(StaticHoverTip.X)` | 悬停提示工厂 | 各附魔 |
 
 ---
 
