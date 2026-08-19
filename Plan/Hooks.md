@@ -42,6 +42,8 @@
 | `AfterCardPlayed(choiceContext, cardPlay)` | AbstractModel | Stick | 任意卡牌打出后（计数） |
 | `AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource)` | AbstractModel | Poisoned/Cursed | 任意模型造成伤害后（按 cardSource 过滤本牌） |
 | `ModifyCardPlayResultLocation(card, isAutoPlay, resources, location)` | AbstractModel | Stick | 改写卡牌打出后的去向 |
+| `AfterObtained()` | RelicModel | 全部遗物 | 遗物拾起时触发（选牌附魔流程） |
+| `HasUponPickupEffect` | RelicModel | 全部遗物 | 标记拾起即生效（驱动拾起提示 UI） |
 
 ---
 
@@ -125,7 +127,40 @@ Modify 类钩子：改写卡牌打出后的去向，返回新位置。
 
 ---
 
-## 4. 配套命令与工具 API
+## 4. 遗物相关（RelicModel / RitsuLib ModRelicTemplate）
+
+### 注册与配置
+- `[RegisterRelic(typeof(PoolType))]`：遗物必须进入遗物池。通用遗物用 `SharedRelicPool`；**角色限定遗物进角色专属池**（原版即如此，如 SneckoSkull 在 `SilentRelicPool`）：`IroncladRelicPool` / `SilentRelicPool` / `DefectRelicPool` / `NecrobinderRelicPool` / `RegentRelicPool`（命名空间 `MegaCrit.Sts2.Core.Models.RelicPools`）。
+- `RelicRarity`：`Starter / Common / Uncommon / Rare / Shop / Event / Ancient`。
+- `RelicAssetProfile(IconPath, IconOutlinePath, BigIconPath)`（RitsuLib 类型，`STS2RitsuLib.Scaffolding.Content`）：小图/轮廓 85x85、大图 256x256。本项目约定 `{类名}.png` + `{类名}Big.png`。
+- 本地化 `relics.json`：`.title` / `.description` / `.flavor`（趣文）；动态变量照常 `{Var}` 占位。
+- ⚠️ **RitsuLib 的 `ModRelicTemplate` 将 `ExtraHoverTips` 密封**：改用 `protected override IEnumerable<IHoverTip> AdditionalHoverTips` 追加悬停提示（另有 `RegisteredKeywordIds`、`IncludeEnergyHoverTip` 两个扩展点）。注意 `HoverTipFactory.FromEnchantment<T>(amount)` 与 `FromForge()` 返回的是 `IEnumerable<IHoverTip>` 集合，直接作为属性值返回即可。
+
+### `AfterObtained()` + `HasUponPickupEffect`
+拾起遗物时触发。`HasUponPickupEffect => true` 驱动原版拾起提示 UI。
+- 本项目全部遗物共用基类 `EnchantOnPickupRelicBase<TEnchantment>`（`Scripts/Relics/`）：拾起时从牌组选牌附魔，具体遗物只需声明 `Rarity` / `MaxCards` / `EnchantAmount`。
+
+### 「从牌组选牌并附魔」流程（参考原版遗物 GnarledHammer）
+```csharp
+CardSelectorPrefs prefs = new(CardSelectorPrefs.EnchantSelectionPrompt, 0, maxCards)
+{
+    Cancelable = false,
+    RequireManualConfirmation = true
+};
+TEnchantment canonical = ModelDb.Enchantment<TEnchantment>();
+foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, canonical, amount, prefs))
+{
+    CardCmd.Enchant(canonical.ToMutable(), card, amount);  // 实例重载：CardCmd.Enchant(EnchantmentModel, CardModel, decimal)
+    CardCmd.Preview(card);                                  // 展示被附魔后的卡牌预览
+}
+```
+- `CardSelectCmd.FromDeckForEnchantment(player, enchantment, amount, prefs)`：选牌界面**自动按该附魔的 `CanEnchant` 过滤牌组**——所以遗物的卡牌类型限定（攻击牌/非能力牌/非消耗牌等）不需要额外代码，由附魔类自身保证。
+- `CardSelectorPrefs(prompt, min, max)`：min=0 即"至多 N 张"。
+- `HoverTipFactory.FromEnchantment<TEnchantment>(amount)`：在遗物悬停提示中展示附魔说明。
+
+---
+
+## 5. 配套命令与工具 API
 
 | API | 用途 | 使用位置 |
 | --- | --- | --- |
@@ -142,7 +177,7 @@ Modify 类钩子：改写卡牌打出后的去向，返回新位置。
 
 ---
 
-## 5. 遗留注意事项
+## 6. 遗留注意事项
 
 - **附魔移除不回滚**：`ClearEnchantmentInternal` 只解除引用，`OnEnchant` 加的关键词/费用修改会残留。功能块 D（驱散之泉事件）实现移除时，需自行 `RemoveKeyword` / 重置费用（参考 `CardModel.DowngradeInternal` 的重置+重放模式）。
 - **Stick 与重放的交互**：重放序列中每次打出都会计数，次数用尽后当次序列的后续打出不再回手（符合"前 Amount 次"语义）。

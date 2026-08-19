@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dchvyx81ij8mb"
-path="res://.godot/imported/icon64.png-f4672868cbaa6807127d37497d35a629.ctex"
+uid="uid://7prk0c804fod"
+path="res://.godot/imported/LithiumBatteryBig.png-6fbea3b96be44feeffcf64a66849d89e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://icon64.png"
-dest_files=["res://.godot/imported/icon64.png-f4672868cbaa6807127d37497d35a629.ctex"]
+source_file="res://MoreEnchantments/images/relics/LithiumBatteryBig.png"
+dest_files=["res://.godot/imported/LithiumBatteryBig.png-6fbea3b96be44feeffcf64a66849d89e.ctex"]
 
 [params]
 
