@@ -44,6 +44,7 @@
 | `ModifyCardPlayResultLocation(card, isAutoPlay, resources, location)` | AbstractModel | Stick | 改写卡牌打出后的去向 |
 | `AfterObtained()` | RelicModel | 全部遗物 | 遗物拾起时触发（选牌附魔流程） |
 | `HasUponPickupEffect` | RelicModel | 全部遗物 | 标记拾起即生效（驱动拾起提示 UI） |
+| `MerchantCost` | RelicModel | ShopEnchantRelicBase/SmallWhetstone/HalfBowlWarPaint/LionSculpture | 商店售价定价覆写 |
 
 ---
 
@@ -158,6 +159,20 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - `CardSelectorPrefs(prompt, min, max)`：min=0 即"至多 N 张"。
 - `HoverTipFactory.FromEnchantment<TEnchantment>(amount)`：在遗物悬停提示中展示附魔说明。
 
+### 商店附魔遗物池（19 个遗物，见 Plan/ShopEnchantRelics.md）
+
+- **中间基类 `ShopEnchantRelicBase<TEnchantment>`**（`Scripts/Relics/`）：在 `EnchantOnPickupRelicBase` 上统一覆写 `MerchantCost`——普通/罕见/稀有 → 75/125/175（低于原版 175/225/275）。个别遗物再覆写（如 LionSculpture 定价 225）。
+- **随机升级模式**（SmallWhetstone/HalfBowlWarPaint，参考原版 Whetstone/WarPaint，不走附魔基类）：
+  ```csharp
+  foreach (CardModel item in PileType.Deck.GetPile(Owner).Cards
+      .Where(c => c != null && c.Type == CardType.Attack && c.IsUpgradable)
+      .ToList().StableShuffle(Owner.RunState.Rng.Niche)
+      .Take(DynamicVars.Cards.IntValue))
+      CardCmd.Upgrade(item);
+  ```
+  - `StableShuffle(Owner.RunState.Rng.Niche)`：扩展方法（`MegaCrit.Sts2.Core.Extensions`），用 Niche 随机流洗牌，不污染主随机数。
+  - `c.IsUpgradable` 过滤不可升级卡；HalfBowlWarPaint 把 `CardType.Attack` 换成 `CardType.Skill`。
+
 ---
 
 ## 5. 配套命令与工具 API
@@ -194,6 +209,7 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - `MerchantRelicEntry(RelicModel, Player)` 构造器直接售卖指定遗物：不查重、不碰抓袋；`CalcCost` 用 `PlayerRng.Shops` 浮动 ±15%；购买后默认 `ClearAfterPurchase`（栏位隐藏、不补货）。
 - **存档兼容**：商店库存不序列化，读档后重进房间重新生成；存档发生在进房间前且 `PlayerRng.Shops` 已序列化——postfix 中全部随机走 `PlayerRng.Shops` 即确定性重放，栏位读档前后一致，多人各端一致。
 - 追加的条目未订阅 `PurchaseCompleted → UpdateEntries`（private）：仅"买本池遗物不触发全店刷新"这一次要行为缺失，反向刷新正常。
+- **补货（RestockAfterPurchase）**：「送货员」(TheCourier，`ShouldRefillMerchantEntry => true`) 使任意商店条目售出后补货；原生 `MerchantRelicEntry.RestockAfterPurchase` 固定从原版抓袋抽取（`FillSlot(RollRarity, 在架黑名单)`）。`MerchantRelicEntry` 是 sealed 无法继承覆写——本 Mod 用 prefix 补丁（`ShopRelicRestockPatch`）拦截"售出遗物属于本池"的情况改从本池补货：复刻原生 `SetModel` 流程时，`Model` 私有 setter 与基类 `_player` 字段用 RitsuLib `PrivateAccess.DeclaredField/Field`（背字段名 `<Model>k__BackingField`）访问，`CalcCost()` 为 public 可直接调；本池无货可补时置 `Model = null` 按售罄隐藏。UI 刷新无需额外事件：`PurchaseCompleted → NMerchantRelic.OnSuccessfulPurchase → UpdateVisual` 会检测 Model 变更重建图标。
 
 ### 商店 UI（NMerchantInventory）
 
@@ -207,7 +223,7 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 
 ## 7. 遗留注意事项
 
-- **商店栏位实机验证**：商店附魔遗物池暂无遗物（功能休眠）；向池中加入遗物后需实机检查：3 个栏位在药水下方、同店不重复、跨商店可重复、购买/售出隐藏正常、读档后栏位内容不变。栏位坐标烘焙在 tscn 中，若新行超出屏幕需调整 `ShopUiSlotsPatch` 的行距推算。
+- **商店栏位实机验证**：商店附魔遗物池已加入 19 个遗物（功能激活）；需实机检查：3 个栏位在药水下方、同店不重复、跨商店可重复、购买/售出隐藏正常、读档后栏位内容不变、75/125/175 定价生效。栏位坐标烘焙在 tscn 中，若新行超出屏幕需调整 `ShopUiSlotsPatch` 的行距推算。
 - **附魔移除不回滚**：`ClearEnchantmentInternal` 只解除引用，`OnEnchant` 加的关键词/费用修改会残留。功能块 D（驱散之泉事件）实现移除时，需自行 `RemoveKeyword` / 重置费用（参考 `CardModel.DowngradeInternal` 的重置+重放模式）。
 - **Stick 与重放的交互**：重放序列中每次打出都会计数，次数用尽后当次序列的后续打出不再回手（符合"前 Amount 次"语义）。
 - **Weakening/Serrated 与自指目标**：攻击牌目标默认为敌人；若未来出现 `TargetType.Self` 的攻击牌，`cardPlay.Target` 可能是友方，届时需加目标阵营判断。

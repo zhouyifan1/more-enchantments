@@ -38,6 +38,7 @@ public class Entry
         // 商店扩展补丁——独立 patcher，失败只关闭商店功能（功能块 C）
         var shopPatcher = RitsuLibFramework.CreatePatcher(ModId, "shop");
         shopPatcher.RegisterPatch<ShopInventoryPatch>();
+        shopPatcher.RegisterPatch<ShopRelicRestockPatch>();
         shopPatcher.RegisterPatch<ShopUiSlotsPatch>();
         shopPatcher.RegisterPatch<ShopUiNavigationPatch>();
         // 非关键补丁，失败仅降级为「无专属栏位」

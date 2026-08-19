@@ -1,7 +1,7 @@
 {
   "MORE_ENCHANTMENTS_ENCHANTMENT_RESILIENCE_ENCHANTMENT.title": "坚韧",
   "MORE_ENCHANTMENTS_ENCHANTMENT_RESILIENCE_ENCHANTMENT.extraCardText": "本场战斗中，这张牌每被保留一次，格挡值+{Amount}。",
-  "MORE_ENCHANTMENTS_ENCHANTMENT_RESILIENCE_ENCHANTMENT.description": "本场战斗中，这张牌每被[gold]保留[/gold]一次，其格挡值增加[blue]{Amount}[/blue]点。",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_RESILIENCE_ENCHANTMENT.description": "这张牌获得[gold]保留[/gold]，本场战斗中，这张牌每被[gold]保留[/gold]一次，其格挡值增加[blue]{Amount}[/blue]点。",
   "MORE_ENCHANTMENTS_ENCHANTMENT_HEAVY_ENCHANTMENT.title": "沉重",
   "MORE_ENCHANTMENTS_ENCHANTMENT_HEAVY_ENCHANTMENT.description": "这张牌的耗能增加1点，造成的攻击伤害翻倍。",
   "MORE_ENCHANTMENTS_ENCHANTMENT_STICK_ENCHANTMENT.title": "粘手",

@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using MegaCrit.Sts2.Core.Entities.Merchant;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Factories;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Random;
+using MegaCrit.Sts2.Core.Saves;
 using MoreEnchantments.Scripts.Relics;
+using STS2RitsuLib.Patching;
 using STS2RitsuLib.Patching.Models;
 
 namespace MoreEnchantments.Scripts.Patches;
@@ -73,7 +76,7 @@ public class ShopInventoryPatch : IPatchMethod
         }
     }
 
-    private static RelicModel? PickRelic(List<RelicModel> pool, HashSet<ModelId> chosen, RelicRarity rolled, Rng rng)
+    internal static RelicModel? PickRelic(List<RelicModel> pool, HashSet<ModelId> chosen, RelicRarity rolled, Rng rng)
     {
         List<RelicModel> candidates = CandidatesOf(rolled);
         for (int i = 0; candidates.Count == 0 && i < _rarityFallback.Length; i++)
@@ -82,5 +85,87 @@ public class ShopInventoryPatch : IPatchMethod
 
         List<RelicModel> CandidatesOf(RelicRarity rarity) =>
             pool.Where(r => r.Rarity == rarity && !chosen.Contains(r.Id)).ToList();
+    }
+}
+
+/// <summary>
+/// 商店附魔遗物栏位的补货补丁：持有「送货员」(TheCourier) 等使商店条目补货的效果时，
+/// 原生 MerchantRelicEntry.RestockAfterPurchase 会从原版遗物抓袋补货——本补丁拦截
+/// “售出的遗物属于商店附魔遗物池”的情况，改为从本池补货（稀有度摇取/同店在架黑名单与原生一致）。
+/// 本池全部可选遗物都在架上时无货可补，栏位按售罄隐藏；原版遗物栏位的补货逻辑不受影响。
+/// </summary>
+public class ShopRelicRestockPatch : IPatchMethod
+{
+    // Model 属性的私有 setter 背字段（MerchantRelicEntry.Model 无法从外部直接赋值）
+    private static readonly FieldInfo? _modelBackingField =
+        PrivateAccess.DeclaredField(typeof(MerchantRelicEntry), "<Model>k__BackingField");
+
+    // MerchantEntry._player（protected readonly，声明于基类）
+    private static readonly FieldInfo? _playerField =
+        PrivateAccess.Field(typeof(MerchantRelicEntry), "_player");
+
+    public static string PatchId => "shop_enchant_relic_restock";
+
+    public static string Description => "商店附魔遗物池栏位售出后的补货改从本池抽取（兼容送货员）";
+
+    public static bool IsCritical => false;
+
+    public static ModPatchTarget[] GetTargets() =>
+        [new(typeof(MerchantRelicEntry), "RestockAfterPurchase")];
+
+    public static bool Prefix(MerchantRelicEntry __instance, MerchantInventory? inventory)
+    {
+        try
+        {
+            RelicModel? sold = __instance.Model;
+            // 只接管本池遗物的补货；原版条目返回 true 走原生逻辑
+            if (sold == null || !ModelDb.RelicPool<ShopEnchantRelicPool>().AllRelicIds.Contains(sold.Id))
+                return true;
+            RestockFromPool(__instance, inventory);
+        }
+        catch (Exception ex)
+        {
+            Entry.Logger.Error($"[ShopRelicRestockPatch] 补货失败: {ex}");
+        }
+        return false;
+    }
+
+    private static void RestockFromPool(MerchantRelicEntry entry, MerchantInventory? inventory)
+    {
+        Player player = (Player)(_playerField?.GetValue(entry)
+            ?? throw new InvalidOperationException("无法访问 MerchantEntry._player"));
+        Rng rng = player.PlayerRng.Shops;
+
+        // 与原生一致的黑名单：当前在架的全部遗物（本池+原版栏位），保证同一商店同时在售不重复
+        HashSet<ModelId> blacklist = inventory?.RelicEntries
+            .Select(e => e.Model?.CanonicalInstance?.Id)
+            .OfType<ModelId>()
+            .ToHashSet() ?? [];
+
+        List<RelicModel> pool = ModelDb.RelicPool<ShopEnchantRelicPool>()
+            .GetUnlockedRelics(player.UnlockState)
+            .Where(r => r.IsAllowed(player.RunState))
+            .ToList();
+
+        RelicModel? next = ShopInventoryPatch.PickRelic(pool, blacklist, RelicFactory.RollRarity(rng), rng);
+        if (next == null)
+        {
+            SetModel(entry, null); // 本池无货可补 → 售罄，栏位隐藏
+            return;
+        }
+
+        // 复刻原生 SetModel 流程（AssertMutable → 赋值 → CalcCost → 标记已见）
+        RelicModel mutable = next.ToMutable();
+        mutable.AssertMutable();
+        SetModel(entry, mutable);
+        entry.CalcCost();
+        SaveManager.Instance.MarkRelicAsSeen(mutable);
+    }
+
+    private static void SetModel(MerchantRelicEntry entry, RelicModel? model)
+    {
+        if (_modelBackingField == null)
+            throw new InvalidOperationException("无法访问 MerchantRelicEntry.Model 背字段");
+        _modelBackingField.SetValue(entry, model);
     }
 }

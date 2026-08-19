@@ -12,6 +12,7 @@
 - 稀有度摇取：每栏位按原版权重 50% 普通 / 33% 罕见 / 17% 稀有（`RelicFactory.RollRarity`）；摇中的稀有度在池内无货时按 普通→罕见→稀有 降级。
 - 定价：`RelicModel.MerchantCost` × 0.85~1.15 浮动（普通 175 / 罕见 225 / 稀有 275）。
 - 购买后栏位隐藏、不补货；存档读档后栏位内容不变（确定性 RNG 重放）。
+- 持有「送货员」(TheCourier) 时栏位售出后会补货——由 `ShopRelicRestockPatch` 接管，**补货仍从本池抽取**（同店在架不重复；本池无货可补时栏位售罄隐藏），不会混入原版遗物；送货员的 8 折价格修饰对本池遗物照常生效（与原生行为一致）。
 
 ## 2. 添加遗物的标准步骤
 
@@ -75,7 +76,7 @@ public class XxxRelic : EnchantOnPickupRelicBase<YyyEnchantment>
 
 | 成员 | 作用 | 备注 |
 | --- | --- | --- |
-| `MerchantCost` | 覆写商店定价基准 | 默认按稀有度 175/225/275，一般不动 |
+| `MerchantCost` | 覆写商店定价基准 | 默认按稀有度 175/225/275，一般不动（这是上一个Agent写的，默认都是要覆写的） |
 | `IsAllowed(IRunState)` | 生成条件过滤（返回 false 则永不进商店栏位） | 只有 runState 没有 player 上下文；要做角色限定需自行检查 runState 内玩家角色，或扩展 `ShopInventoryPatch` 的过滤 |
 | `IsStackable => true` | 重复获得时叠层计数而非多实例 | 默认 false（重复获得 = 遗物栏多个独立实例，与原版 Circlet 一致） |
 
