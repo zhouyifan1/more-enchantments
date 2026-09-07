@@ -96,7 +96,7 @@ internal static class ExtraEnchantmentStore
     /// <summary>读档恢复：从 SavedAttachedState 解码，按槽序 ApplyInternal + ModifyCard（在主槽与升级重放之后调用）。</summary>
     public static void RestoreFromSave(CardModel card)
     {
-        if (!_persisted.TryGetValue(card, out string encoded) || string.IsNullOrEmpty(encoded))
+        if (!_persisted.TryGetValue(card, out string? encoded) || string.IsNullOrEmpty(encoded))
             return;
         List<EnchantmentModel> list = _extras.GetOrCreateValue(card);
         foreach (string item in encoded.Split(';', StringSplitOptions.RemoveEmptyEntries))

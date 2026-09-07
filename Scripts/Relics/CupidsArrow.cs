@@ -6,15 +6,15 @@ using STS2RitsuLib.Interop.AutoRegistration;
 namespace MoreEnchantments.Scripts.Relics;
 
 /// <summary>
-/// 遗物「恶魔火符文」：拾起时，从牌组选择至多 1 张非消耗牌，附魔「燃尽」2 层。
-/// 控制台测试：relic add MORE_ENCHANTMENTS_RELIC_FIEND_FIRE_RUNE
+/// 遗物「丘比特之箭」：拾起时，从牌组选择至多 2 张牌，附魔「丘比特」1 层。
+/// 控制台测试：relic add MORE_ENCHANTMENTS_RELIC_CUPIDS_ARROW
 /// </summary>
 [RegisterRelic(typeof(SharedRelicPool))]
-public class FiendFireRune : EnchantOnPickupRelicBase<BurntOutEnchantment>
+public class CupidsArrow : EnchantOnPickupRelicBase<CupidEnchantment>
 {
     public override RelicRarity Rarity => RelicRarity.Rare;
 
-    protected override int MaxCards => 1;
+    protected override int MaxCards => 2;
 
-    protected override int EnchantAmount => 2;
+    protected override int EnchantAmount => 1;
 }

@@ -88,5 +88,14 @@
   "MORE_ENCHANTMENTS_RELIC_METEORITE_SLAB.flavor": "Really, really heavy! Its inscription is illegible to you.",
   "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.title": "Beautiful Ring",
   "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Glam[/gold] {EnchantAmount}.",
-  "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.flavor": "The identity of its former owner is self-evident."
+  "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.flavor": "The identity of its former owner is self-evident.",
+  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.title": "Mysterious Potion",
+  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.description": "On pickup, increase your enchantment limit by 1.",
+  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.flavor": "The ingredient list reads: Trenbolone, Trenbolone Acetate, Methenolone...",
+  "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.title": "Pandora's Hairband",
+  "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Pandora[/gold] {EnchantAmount}.",
+  "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.flavor": "A gift from Hephaestus.",
+  "MORE_ENCHANTMENTS_RELIC_CUPIDS_ARROW.title": "Cupid's Arrow",
+  "MORE_ENCHANTMENTS_RELIC_CUPIDS_ARROW.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Cupid[/gold] {EnchantAmount}.",
+  "MORE_ENCHANTMENTS_RELIC_CUPIDS_ARROW.flavor": "Hearts entwined, unto death."
 }

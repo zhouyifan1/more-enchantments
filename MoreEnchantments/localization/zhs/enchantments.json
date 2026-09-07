@@ -34,6 +34,12 @@
   "MORE_ENCHANTMENTS_ENCHANTMENT_ELECTRIC_ENCHANTMENT.extraCardText": "生成{Amount}个闪电充能球。",
   "MORE_ENCHANTMENTS_ENCHANTMENT_ELECTRIC_ENCHANTMENT.description": "这张牌被打出时，生成[blue]{Amount}[/blue]个[gold]闪电[/gold]充能球。",
   "MORE_ENCHANTMENTS_ENCHANTMENT_FORGE_ENCHANTMENT.title": "铸剑",
-  "MORE_ENCHANTMENTS_ENCHANTMENT_FORGE_ENCHANTMENT.extraCardText": "铸造{Amount}点。",
-  "MORE_ENCHANTMENTS_ENCHANTMENT_FORGE_ENCHANTMENT.description": "这张牌被打出时，[gold]铸造[/gold][blue]{Amount}[/blue]点。"
+  "MORE_ENCHANTMENTS_ENCHANTMENT_FORGE_ENCHANTMENT.extraCardText": "铸造{Amount}。",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_FORGE_ENCHANTMENT.description": "这张牌被打出时，[gold]铸造[/gold][blue]{Amount}[/blue]点。",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_PANDORA_ENCHANTMENT.title": "潘多拉",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_PANDORA_ENCHANTMENT.extraCardText": "抽到这张牌时，将其变化并继承此附魔。",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_PANDORA_ENCHANTMENT.description": "每当你抽到这张牌时，将其[gold]变化[/gold]为一张随机卡牌，新卡牌继承此附魔。",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.title": "丘比特",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.extraCardText": "抽到这张牌时，将所有「丘比特」牌放入手牌。",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.description": "每当你抽到这张牌时，将所有附有[gold]丘比特[/gold]的卡牌放入你的手牌。"
 }

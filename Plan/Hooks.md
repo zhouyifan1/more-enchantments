@@ -39,6 +39,7 @@
 | `DisplayAmount` | EnchantmentModel | Stick | 角标显示值覆写（实时倒数剩余次数） |
 | `ExtraHoverTips` | EnchantmentModel | Resilience/BurntOut/Weakening/Serrated/Tactics/Reaction/Poisoned/Sacrifice/Cursed/Electric/Forge | 额外悬停提示 |
 | `AfterFlush(choiceContext, player, flushed, retained)` | AbstractModel | Resilience | 回合结束弃牌/保留结算后 |
+| `AfterCardDrawn(choiceContext, card, fromHandDraw)` | AbstractModel | Pandora/Cupid | 任意卡牌被抽到时（过滤 card == Card 即"抽到本卡"，参考卡牌 KinglyPunch） |
 | `AfterCardPlayed(choiceContext, cardPlay)` | AbstractModel | Stick | 任意卡牌打出后（计数） |
 | `AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource)` | AbstractModel | Poisoned/Cursed | 任意模型造成伤害后（按 cardSource 过滤本牌） |
 | `ModifyCardPlayResultLocation(card, isAutoPlay, resources, location)` | AbstractModel | Stick | 改写卡牌打出后的去向 |
@@ -115,6 +116,12 @@
 - Cursed：用 `result.TotalDamage`（含格挡前的总伤害）作为灾厄施加量，参考 ReaperFormPower。
 - `DamageResult` 在 `MegaCrit.Sts2.Core.Entities.Creatures` 命名空间。
 
+### `AfterCardDrawn(PlayerChoiceContext, CardModel card, bool fromHandDraw)`
+任意卡牌被抽到时触发（全模型广播），需自行过滤 `card == Card`（参考卡牌 KinglyPunch）。
+- Pandora：抽到本卡时 `CardCmd.TransformToRandom(Card, Card.Owner.RunState.Rng.CombatCardSelection)`（参考 EntropyPower），再对 `result.cardAdded` 用 `CardCmd.Enchant<T>` 继承附魔。注意 `CardCmd.Enchant` 在 `CanEnchant` 失败时**抛异常**，需先防御性检查；变化只作用于战斗克隆体（§0.3），牌组原卡不受影响。
+- Cupid：抽到本卡时把 `Owner.PlayerCombatState.AllCards` 中所有带同型附魔的牌 `CardPileCmd.Add(cards, PileType.Hand)` 移入手牌（参考 SummonForth，过滤 `Pile == null || Pile.Type != Hand`）。**移入手牌不是抽牌，不会连锁触发** AfterCardDrawn。
+- 多附魔兼容：检查"某卡是否带本附魔"须同时看主槽（`card.Enchantment is T`）与附加槽（`EnchantLimitService.GetExtraEnchantments(card)`，见 §7）。
+
 ### ~~`AfterPlayerTurnStart`~~ → 改用原版"下回合"状态（经验记录）
 Tactics/Reaction 曾用 `OnPlay` 计数 + `AfterPlayerTurnStart` 自管结算，已重写为打出时施加原版状态：
 `EnergyNextTurnPower`（参考卡牌 ChargeBattery）/ `DrawCardsNextTurnPower`（参考卡牌 Predator）。
@@ -189,6 +196,9 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 | `EnchantmentStatus.Normal / Disabled` | 附魔状态：置灰图标、隐藏追加文本 | Stick（Glam 同用法） |
 | `Card.CombatState.HittableEnemies` | 当前全体可攻击敌人 | Weakening/Serrated |
 | `HoverTipFactory.FromKeyword / FromPower<T> / FromOrb<T> / FromForge() / Static(StaticHoverTip.X)` | 悬停提示工厂 | 各附魔 |
+| `CardCmd.TransformToRandom(card, rng)` → `CardPileAddResult{success, cardAdded}` | 原牌堆原位随机变化（选项经稀有度/战斗可生成过滤，参考 EntropyPower） | Pandora |
+| `CardPileCmd.Add(IEnumerable<CardModel>, PileType.Hand)` | 把任意牌堆的卡牌移入手牌（不算抽牌） | Cupid |
+| `PlayerCombatState.AllCards` | 本场战斗玩家全部卡牌（跨牌堆，参考 SummonForth） | Cupid |
 
 ---
 
@@ -240,8 +250,12 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - **钩子广播**：`CombatState.IterateHookListeners` / `RunState.IterateHookListeners` postfix，在主槽附魔之后按槽序插入附加槽；资格过滤自管（`HasCard && !Card.HasBeenRemovedFromState && Owner.IsActiveForHooks`，与原生 `Contains` 同规则）。
 - **持久化**：附加槽编码 `"CAT.ENTRY:Amount;..."` 存 `SavedAttachedState<CardModel, string>`（桥接 `SavedProperties`，JSON/联机二进制兼容；`ModelId.ToString()`="CAT.ENTRY"，`ModelId.Deserialize` 还原）。读档在 `CardModel.FromSerializable` postfix 恢复（`SaveUtil.EnchantmentOrDeprecated` + ApplyInternal + ModifyCard，在原版主槽与升级重放之后）；克隆在 `AbstractModel.MutableClone` postfix 迁移（ClonePreservingMutability + ApplyInternal，不重放 ModifyCard）。
 - **UI 即时刷新**：`EnchantmentChanged` 事件无法外部触发（event），用 PrivateAccess 读背字段委托直接 Invoke（等效原生 EnchantInternal 末尾）。
-- **卡面多图标**：`NCard.UpdateEnchantmentVisuals`（private）postfix，Duplicate `%Enchantment` tab 水平左排；复制的 tab 共享 ShaderMaterial 须 `Material.Duplicate()` 独立化（置灰参数 h/s/v 为 NCard 私有静态 StringName，PrivateAccess 读取）；附加槽 `StatusChanged` 自管订阅（原生 `_subscribedEnchantment` 单订阅会抛异常）；`OnReturnedFromPool`/`OnFreedToPool` 时销毁复制 tab 防对象池串卡。
-- **已知裁剪**：M12（首回合 `ShouldStartAtBottomOfDrawPile` 沉底覆盖附加槽）未实现——原版仅 Imbued 使用该属性，本 Mod 及商店池引用的附魔均不涉及；`NDeckHistoryEntry`/`NEnchantPreview`/`NCardEnchantVfx` 仍只显示主槽（显示层降级，逻辑不受影响）。
+- **卡面多图标**：`NCard.UpdateEnchantmentVisuals`（private）postfix，Duplicate `%Enchantment` tab 后**挂为主槽 tab 的子节点、竖排在其下方**（跟随主槽显隐与星标上移；vfx 隐藏主槽时附加槽自动隐藏）。复制的 tab 共享 ShaderMaterial 须 `Material.Duplicate()` 独立化（置灰参数 h/s/v 为 NCard 私有静态 StringName，PrivateAccess 读取）；**复制模板优先选首个附加槽 tab，不能直接 Duplicate 挂了附加槽的主槽 tab**（会把既有附加槽一起复制进去造成嵌套重复图标）；附加槽 `StatusChanged` 自管订阅（原生 `_subscribedEnchantment` 单订阅会抛异常）；`OnReturnedFromPool`/`OnFreedToPool` 时销毁复制 tab 防对象池串卡。
+- **已知裁剪**：M12（首回合 `ShouldStartAtBottomOfDrawPile` 沉底覆盖附加槽）未实现——原版仅 Imbued 使用该属性，本 Mod 及商店池引用的附魔均不涉及；`NDeckHistoryEntry`/`NCardEnchantVfx` 仍只显示主槽（显示层降级，逻辑不受影响）；`NEnchantPreview` 已由 `EnchantLimitPreviewPatch` 适配多槽（新附魔以附加槽附着到预览克隆）。
+
+### 上限提升的消费方
+
+- **遗物「神秘药剂」(MysteriousPotion)**：`AfterObtained` 调 `EnchantLimitService.AddBonus(Owner, 1)`（含 `Flash()` 反馈）。稀有度 `RelicRarity.Shop` + `SharedRelicPool`（原版 Brimstone 同款）——Shop 稀有度不在 `RelicFactory.RollRarity` 权重内，天然不进战斗抓袋，仅由商店售卖逻辑从共享池抽取；`MerchantCost` 默认 200 未覆写。上限提升随 `enchant_limit` RunSavedData 持久化，读档不丢失。
 
 ---
 

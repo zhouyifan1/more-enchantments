@@ -35,5 +35,11 @@
   "MORE_ENCHANTMENTS_ENCHANTMENT_ELECTRIC_ENCHANTMENT.description": "When this card is played, [gold]Channel[/gold] [blue]{Amount}[/blue] [gold]Lightning[/gold] orbs.",
   "MORE_ENCHANTMENTS_ENCHANTMENT_FORGE_ENCHANTMENT.title": "Forge",
   "MORE_ENCHANTMENTS_ENCHANTMENT_FORGE_ENCHANTMENT.extraCardText": "Forge {Amount}.",
-  "MORE_ENCHANTMENTS_ENCHANTMENT_FORGE_ENCHANTMENT.description": "When this card is played, [gold]Forge[/gold] [blue]{Amount}[/blue]."
+  "MORE_ENCHANTMENTS_ENCHANTMENT_FORGE_ENCHANTMENT.description": "When this card is played, [gold]Forge[/gold] [blue]{Amount}[/blue].",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_PANDORA_ENCHANTMENT.title": "Pandora",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_PANDORA_ENCHANTMENT.extraCardText": "When drawn, Transform into a random card that keeps this enchantment.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_PANDORA_ENCHANTMENT.description": "Whenever you draw this card, [gold]Transform[/gold] it into a random card. The new card keeps this enchantment.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.title": "Cupid",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.extraCardText": "When drawn, put all cards with Cupid into your hand.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.description": "Whenever you draw this card, put all cards with [gold]Cupid[/gold] into your hand."
 }

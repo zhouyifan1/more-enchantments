@@ -88,5 +88,14 @@
   "MORE_ENCHANTMENTS_RELIC_METEORITE_SLAB.flavor": "真的非常重！上面的文字你无从识别。",
   "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.title": "华美戒指",
   "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]华彩[/gold]{EnchantAmount}层。",
-  "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.flavor": "原主人的身份不言自明。"
+  "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.flavor": "原主人的身份不言自明。",
+  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.title": "神秘药剂",
+  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.description": "拾起时，你的卡牌附魔上限提高1。",
+  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.flavor": "上面印着配料表：群勃龙、醋酸群勃龙、美替诺龙……",
+  "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.title": "潘多拉的发带",
+  "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]潘多拉[/gold]{EnchantAmount}层。",
+  "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.flavor": "赫菲斯托斯的礼物。",
+  "MORE_ENCHANTMENTS_RELIC_CUPIDS_ARROW.title": "丘比特之箭",
+  "MORE_ENCHANTMENTS_RELIC_CUPIDS_ARROW.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]丘比特[/gold]{EnchantAmount}层。",
+  "MORE_ENCHANTMENTS_RELIC_CUPIDS_ARROW.flavor": "心心相印，至死不渝。"
 }

@@ -187,9 +187,15 @@ internal static class NCardExtraEnchantmentTabs
     {
         if (index < state.Tabs.Count && GodotObject.IsInstanceValid(state.Tabs[index]))
             return state.Tabs[index];
-        Control tab = (Control)primaryTab.Duplicate();
-        // 复制的 tab 与主槽共享 ShaderMaterial，必须独立化才能逐槽置灰
-        if (primaryTab.Material is ShaderMaterial material)
+        // 模板选择：优先用首个附加槽 tab（附加槽 tab 永远不会挂子级附加槽，结构干净）；
+        // 尚无附加槽时才用主槽 tab——此时主槽 tab 还没有任何附加槽子节点（第一个总是先创建）。
+        // 若对挂有附加槽的主槽 tab 直接 Duplicate，会把既有附加槽一起复制进去（嵌套重复图标）。
+        Control template = state.Tabs.Count > 0 && GodotObject.IsInstanceValid(state.Tabs[0])
+            ? state.Tabs[0]
+            : primaryTab;
+        Control tab = (Control)template.Duplicate();
+        // Duplicate 只复制材质引用，必须独立化才能逐槽置灰
+        if (tab.Material is ShaderMaterial material)
             tab.Material = (ShaderMaterial)material.Duplicate();
         // 挂到主槽 tab 下（而非同级）：位置相对主槽，主槽隐藏（附魔 vfx 等）时附加槽自动跟随隐藏
         primaryTab.AddChild(tab);
@@ -271,19 +277,19 @@ public class EnchantLimitPreviewPatch : IPatchMethod
             Control before = (Control)_beforeField.GetValue(__instance)!;
             Control after = (Control)_afterField.GetValue(__instance)!;
 
-            NPreviewCardHolder beforeHolder = NPreviewCardHolder.Create(NCard.Create(card), showHoverTips: true, scaleOnHover: false);
+            NPreviewCardHolder beforeHolder = NPreviewCardHolder.Create(NCard.Create(card)!, showHoverTips: true, scaleOnHover: false)!;
             before.AddChildSafely(beforeHolder);
-            beforeHolder.CardNode.UpdateVisuals(card.Pile.Type, CardPreviewMode.Normal);
+            beforeHolder.CardNode!.UpdateVisuals(card.Pile!.Type, CardPreviewMode.Normal);
 
-            CardModel clone = card.CardScope.CloneCard(card);
+            CardModel clone = card.CardScope!.CloneCard(card);
             EnchantmentModel extra = canonicalEnchantment.ToMutable();
             ExtraEnchantmentStore.AttachPreview(clone, extra, amount);
             clone.IsEnchantmentPreview = true;
             extra.ModifyCard();
 
-            NPreviewCardHolder afterHolder = NPreviewCardHolder.Create(NCard.Create(clone), showHoverTips: true, scaleOnHover: false);
+            NPreviewCardHolder afterHolder = NPreviewCardHolder.Create(NCard.Create(clone)!, showHoverTips: true, scaleOnHover: false)!;
             after.AddChildSafely(afterHolder);
-            afterHolder.CardNode.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
+            afterHolder.CardNode!.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
             return false;
         }
         catch (Exception ex)
