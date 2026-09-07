@@ -221,7 +221,31 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 
 ---
 
-## 7. 遗留注意事项
+## 7. 附魔栏位上限（功能块 E：一卡多附魔）
+
+实现文件：`Scripts/Data/EnchantLimitService.cs`（公开 API + RunSavedData）、`Scripts/Data/ExtraEnchantmentStore.cs`（附加槽存储/持久化）、`Scripts/Patches/EnchantmentLimitPatch.cs`（模型层 12 补丁）、`EnchantNumericFoldPatch.cs`（数值 fold transpiler）、`EnchantOnPlayDispatchPatch.cs`（OnPlay transpiler）、`EnchantmentLimitUiPatch.cs`（卡面多图标）。方案设计见 `Plan/EnchantmentLimit.md`。
+
+### 核心架构
+
+- **原版一卡一附魔是硬结构而非计数器**：`CardModel.Enchantment` 单属性；`EnchantmentModel.CanEnchant:261` 占槽拒绝；`CardCmd.Enchant:434` 异型抛异常。本 Mod 不改写单槽语义，把它当 0 号主槽，第 2~N 个附魔存 `ExtraEnchantmentStore`（ConditionalWeakTable）。不变式：附加槽非空 ⇒ 主槽非空（主槽被 `ClearEnchantment` 清除时首个附加槽晋升，只迁移引用不重放 ModifyCard）。
+- **槽序 = 附着顺序**，所有分发（数值 fold/重放/OnPlay/钩子广播）按槽序折叠，存档/克隆/晋升保持顺序。
+- **上限**：`EnchantLimitService.BaseLimit`（代码可改，默认 2）+ RunSavedData 按玩家存 `{Bonus, Peak}`（key `enchant_limit`，发布后勿改），`GetLimit = max(BaseLimit, Peak)`——局内只升不降，读档保持。
+
+### 关键机制结论
+
+- **手动附着路径**（绕开 CardCmd.Enchant）：`enchantment.ApplyInternal(card, amount)` + `enchantment.ModifyCard()` 均为 public；附魔的 `Card` 反引 setter 二次赋值抛异常（不可迁移），晋升/克隆时须先 `ClearInternal()`。
+- **「忽略占用」评估**：暂时置空主槽背字段 `<Enchantment>k__BackingField`（PrivateAccess）后调真实 `CanEnchant`——派生类自定义条件走原始代码路径，结果精确；同型规则单独判（任一槽同型 → 仅 IsStackable 允许堆叠）。
+- **数值链 fold（transpiler 替换调用点）**：`Hook.ModifyDamage/ModifyBlock`、`CardModel.GetEnchantedReplayCount`、6 个 DynamicVar 预览类中对 `EnchantmentModel.Enchant{Damage,Block}{Additive,Multiplicative}/EnchantPlayCount` 的 callvirt 被替换为静态 fold 助手（堆栈效果一致：实例作为 arg0）。加性 fold 返回总增量、乘性返回总因子、PlayCount 逐槽折叠——单点补丁即覆盖结算与卡面预览两条链。
+- **OnPlay 分发（transpiler，MethodType.Async）**：async 方法的 MoveNext 中 `Enchantment.OnPlay` 调用处替换为 fold（先主槽后附加槽，含 `InvokeExecutionFinished`），时机与原生一致（卡效果后、Affliction/AfterCardPlayed 前，每 replay 一次）。
+- **钩子广播**：`CombatState.IterateHookListeners` / `RunState.IterateHookListeners` postfix，在主槽附魔之后按槽序插入附加槽；资格过滤自管（`HasCard && !Card.HasBeenRemovedFromState && Owner.IsActiveForHooks`，与原生 `Contains` 同规则）。
+- **持久化**：附加槽编码 `"CAT.ENTRY:Amount;..."` 存 `SavedAttachedState<CardModel, string>`（桥接 `SavedProperties`，JSON/联机二进制兼容；`ModelId.ToString()`="CAT.ENTRY"，`ModelId.Deserialize` 还原）。读档在 `CardModel.FromSerializable` postfix 恢复（`SaveUtil.EnchantmentOrDeprecated` + ApplyInternal + ModifyCard，在原版主槽与升级重放之后）；克隆在 `AbstractModel.MutableClone` postfix 迁移（ClonePreservingMutability + ApplyInternal，不重放 ModifyCard）。
+- **UI 即时刷新**：`EnchantmentChanged` 事件无法外部触发（event），用 PrivateAccess 读背字段委托直接 Invoke（等效原生 EnchantInternal 末尾）。
+- **卡面多图标**：`NCard.UpdateEnchantmentVisuals`（private）postfix，Duplicate `%Enchantment` tab 水平左排；复制的 tab 共享 ShaderMaterial 须 `Material.Duplicate()` 独立化（置灰参数 h/s/v 为 NCard 私有静态 StringName，PrivateAccess 读取）；附加槽 `StatusChanged` 自管订阅（原生 `_subscribedEnchantment` 单订阅会抛异常）；`OnReturnedFromPool`/`OnFreedToPool` 时销毁复制 tab 防对象池串卡。
+- **已知裁剪**：M12（首回合 `ShouldStartAtBottomOfDrawPile` 沉底覆盖附加槽）未实现——原版仅 Imbued 使用该属性，本 Mod 及商店池引用的附魔均不涉及；`NDeckHistoryEntry`/`NEnchantPreview`/`NCardEnchantVfx` 仍只显示主槽（显示层降级，逻辑不受影响）。
+
+---
+
+## 8. 遗留注意事项
 
 - **商店栏位实机验证**：商店附魔遗物池已加入 19 个遗物（功能激活）；需实机检查：3 个栏位在药水下方、同店不重复、跨商店可重复、购买/售出隐藏正常、读档后栏位内容不变、75/125/175 定价生效。栏位坐标烘焙在 tscn 中，若新行超出屏幕需调整 `ShopUiSlotsPatch` 的行距推算。
 - **附魔移除不回滚**：`ClearEnchantmentInternal` 只解除引用，`OnEnchant` 加的关键词/费用修改会残留。功能块 D（驱散之泉事件）实现移除时，需自行 `RemoveKeyword` / 重置费用（参考 `CardModel.DowngradeInternal` 的重置+重放模式）。

@@ -1,6 +1,7 @@
 using System.Reflection;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
+using MoreEnchantments.Scripts.Data;
 using MoreEnchantments.Scripts.Patches;
 using STS2RitsuLib;
 using STS2RitsuLib.Interop;
@@ -33,7 +34,27 @@ public class Entry
         RitsuLibFramework.ApplyRequiredPatcher(corePatcher, DisableMod);
 
         // 附魔栏位上限补丁——独立 patcher，失败则恢复原版上限（功能块 E）
-        // var limitPatcher = RitsuLibFramework.CreatePatcher(ModId, "enchantment-limit");
+        EnchantLimitService.RegisterData();
+        var limitPatcher = RitsuLibFramework.CreatePatcher(ModId, "enchantment-limit");
+        limitPatcher.RegisterPatch<EnchantLimitCanEnchantPatch>();
+        limitPatcher.RegisterPatch<EnchantLimitEnchantCommandPatch>();
+        limitPatcher.RegisterPatch<EnchantLimitHookBroadcastPatch>();
+        limitPatcher.RegisterPatch<EnchantNumericFoldPatch>();
+        limitPatcher.RegisterPatch<EnchantOnPlayDispatchPatch>();
+        limitPatcher.RegisterPatch<EnchantLimitHoverTipsPatch>();
+        limitPatcher.RegisterPatch<EnchantLimitExtraCardTextPatch>();
+        limitPatcher.RegisterPatch<EnchantLimitGlowPatch>();
+        limitPatcher.RegisterPatch<EnchantLimitRecalculatePatch>();
+        limitPatcher.RegisterPatch<EnchantLimitDowngradePatch>();
+        limitPatcher.RegisterPatch<EnchantLimitClearEnchantmentPatch>();
+        limitPatcher.RegisterPatch<EnchantLimitClonePatch>();
+        limitPatcher.RegisterPatch<EnchantLimitDeserializePatch>();
+        limitPatcher.RegisterPatch<EnchantLimitCardUiPatch>();
+        limitPatcher.RegisterPatch<EnchantLimitCardPreviewPatch>();
+        limitPatcher.RegisterPatch<EnchantLimitPreviewPatch>();
+        // 非关键补丁，失败仅降级（上限回到原版 1，其余功能不受影响）
+        if (!limitPatcher.PatchAll())
+            Logger.Error("Enchantment-limit patches failed; enchantment limit stays at vanilla.");
 
         // 商店扩展补丁——独立 patcher，失败只关闭商店功能（功能块 C）
         var shopPatcher = RitsuLibFramework.CreatePatcher(ModId, "shop");

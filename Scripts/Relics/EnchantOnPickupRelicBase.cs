@@ -1,8 +1,11 @@
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 using STS2RitsuLib.Scaffolding.Content;
 
 namespace MoreEnchantments.Scripts.Relics;
@@ -36,7 +39,7 @@ public abstract class EnchantOnPickupRelicBase<TEnchantment> : ModRelicTemplate 
         BigIconPath: $"res://MoreEnchantments/images/relics/{GetType().Name}Big.png"
     );
 
-    // 拾起时：从牌组选择至多 MaxCards 张卡牌并附魔（参考遗物 GnarledHammer）
+    // 拾起时：从牌组选择至多 MaxCards 张卡牌并附魔（参考遗物 GnarledHammer / BeautifulBracelet）
     public override async Task AfterObtained()
     {
         CardSelectorPrefs prefs = new(CardSelectorPrefs.EnchantSelectionPrompt, 0, MaxCards)
@@ -47,8 +50,19 @@ public abstract class EnchantOnPickupRelicBase<TEnchantment> : ModRelicTemplate 
         TEnchantment canonicalEnchantment = ModelDb.Enchantment<TEnchantment>();
         foreach (CardModel item in await CardSelectCmd.FromDeckForEnchantment(Owner, canonicalEnchantment, EnchantAmount, prefs))
         {
-            CardCmd.Enchant(canonicalEnchantment.ToMutable(), item, EnchantAmount);
-            CardCmd.Preview(item);
+            EnchantmentModel? applied = CardCmd.Enchant(canonicalEnchantment.ToMutable(), item, EnchantAmount);
+            // 反馈二选一（原版惯例：GnarledHammer 只 Preview、BeautifulBracelet 只播 vfx，两者同放会叠加成"两个动画"）。
+            // NCardEnchantVfx 只显示主槽图标，落在附加槽时播放会误显老附魔图标，故主槽附着播 vfx、附加槽附着用 Preview（功能块 E 已知裁剪 U5）
+            if (applied != null && item.Enchantment == applied)
+            {
+                NCardEnchantVfx? vfx = NCardEnchantVfx.Create(item);
+                if (vfx != null)
+                    NRun.Instance?.GlobalUi.CardPreviewContainer.AddChildSafely(vfx);
+            }
+            else
+            {
+                CardCmd.Preview(item);
+            }
         }
     }
 }
