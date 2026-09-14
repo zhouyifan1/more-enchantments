@@ -77,6 +77,9 @@ public static class EnchantLimitService
     public static IReadOnlyList<EnchantmentModel> GetExtraEnchantments(CardModel card) =>
         ExtraEnchantmentStore.Get(card);
 
+    /// <summary>该卡的任一槽位（主槽或附加槽）是否已有同型附魔。</summary>
+    public static bool HasSameTypeEnchantment(CardModel card, Type type) => HasSameType(card, type);
+
     /// <summary>
     /// 「忽略占用」评估：回答"若该卡没有附魔占用限制，此附魔能否附着"。
     /// 同型规则优先：任一槽已有同型 → 仅 IsStackable 允许（堆叠语义，与原版一致）。

@@ -41,9 +41,14 @@ public class EnchantLimitCanEnchantPatch : IPatchMethod
     {
         try
         {
-            if (__result || card.Enchantment == null || !EnchantLimitService.HasFreeSlot(card))
+            if (__result || card.Enchantment == null)
                 return;
-            if (EnchantLimitService.EvaluateIgnoringOccupancy(__instance, card))
+            // 同型可堆叠：堆叠不占新槽位，无需免费槽（修复：满槽卡的同型堆叠曾被误过滤出选牌界面）
+            bool sameTypeStack = EnchantLimitService.HasSameTypeEnchantment(card, __instance.GetType())
+                                 && __instance.IsStackable;
+            // 异型新附着：需要免费槽位 + 占用中立评估通过
+            if (sameTypeStack
+                || (EnchantLimitService.HasFreeSlot(card) && EnchantLimitService.EvaluateIgnoringOccupancy(__instance, card)))
                 __result = true;
         }
         catch (Exception ex)
@@ -369,6 +374,32 @@ public class EnchantLimitDeserializePatch : IPatchMethod
         catch (Exception ex)
         {
             Entry.Logger.Error($"[EnchantLimitDeserializePatch] {ex}");
+        }
+    }
+}
+
+// 原版附魔堆叠放开：凡卡面显示层数角标（ShowAmount）的附魔统一视为可堆叠。
+// 原版 IsStackable 默认 false 且原版附魔类多为 sealed 无法覆写，只能对 getter 做 postfix；
+// 本 Mod 附魔不走此补丁（基类已按 IsStackable => ShowAmount 约定覆写，getter 不经过基类）。
+public class StackableEnchantmentPatch : IPatchMethod
+{
+    public static string PatchId => "stackable_enchantment_show_amount";
+    public static string Description => "卡面显示层数的附魔（含原版）统一视为可堆叠";
+    public static bool IsCritical => false;
+
+    public static ModPatchTarget[] GetTargets() =>
+        [new(typeof(EnchantmentModel), nameof(EnchantmentModel.IsStackable), MethodType.Getter)];
+
+    public static void Postfix(EnchantmentModel __instance, ref bool __result)
+    {
+        try
+        {
+            if (!__result && __instance.ShowAmount)
+                __result = true;
+        }
+        catch (Exception ex)
+        {
+            Entry.Logger.Error($"[StackableEnchantmentPatch] {ex}");
         }
     }
 }

@@ -41,5 +41,14 @@
   "MORE_ENCHANTMENTS_ENCHANTMENT_PANDORA_ENCHANTMENT.description": "Whenever you draw this card, [gold]Transform[/gold] it into a random card. The new card keeps this enchantment.",
   "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.title": "Cupid",
   "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.extraCardText": "When drawn, put all cards with Cupid into your hand.",
-  "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.description": "Whenever you draw this card, put all cards with [gold]Cupid[/gold] into your hand."
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CUPID_ENCHANTMENT.description": "Whenever you draw this card, put all cards with [gold]Cupid[/gold] into your hand.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_HYPER_LINK_ENCHANTMENT.title": "HyperLink",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_HYPER_LINK_ENCHANTMENT.extraCardText": "When played, play all other HyperLink cards.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_HYPER_LINK_ENCHANTMENT.description": "When this card is played, play all cards with [gold]HyperLink[/gold] from your hand, draw pile, and discard pile.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_TICK_TOCK_ENCHANTMENT.title": "Tick Tock",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_TICK_TOCK_ENCHANTMENT.extraCardText": "When played, add 1 count to Old Pocket Watch.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_TICK_TOCK_ENCHANTMENT.description": "When this card is played, add 1 count to [gold]Old Pocket Watch[/gold].",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.title": "Greedy",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.extraCardText": "+2 damage. Exhaust. On kill, gain {Amount} Gold.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.description": "This card deals +2 damage and gains [gold]Exhaust[/gold]. Whenever it [gold]kills[/gold] an enemy, gain [blue]{Amount}[/blue] Gold."
 }

@@ -52,9 +52,22 @@ public class Entry
         limitPatcher.RegisterPatch<EnchantLimitCardUiPatch>();
         limitPatcher.RegisterPatch<EnchantLimitCardPreviewPatch>();
         limitPatcher.RegisterPatch<EnchantLimitPreviewPatch>();
+        limitPatcher.RegisterPatch<StackableEnchantmentPatch>();
+        limitPatcher.RegisterPatch<MysteriousPotionPatch>();
         // 非关键补丁，失败仅降级（上限回到原版 1，其余功能不受影响）
         if (!limitPatcher.PatchAll())
             Logger.Error("Enchantment-limit patches failed; enchantment limit stays at vanilla.");
+
+        // 先古遗物池注入补丁（机器残片/老旧的怀表/弥达斯之触）——非关键，失败降级为 RitsuLib 追加式注册
+        var ancientPatcher = RitsuLibFramework.CreatePatcher(ModId, "ancient-relic-pool");
+        ancientPatcher.RegisterPatch<DarvRelicSetInjectionPatch>();
+        ancientPatcher.RegisterPatch<NeowCurseOptionPatch>();
+        ancientPatcher.RegisterPatch<OrobasPoolOneOptionPatch>();
+        if (!ancientPatcher.PatchAll())
+        {
+            Logger.Error("Ancient relic pool patches failed; falling back to append-based ancient options.");
+            AncientOptionRules.RegisterFallback();
+        }
 
         // 商店扩展补丁——独立 patcher，失败只关闭商店功能（功能块 C）
         var shopPatcher = RitsuLibFramework.CreatePatcher(ModId, "shop");

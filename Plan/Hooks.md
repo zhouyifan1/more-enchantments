@@ -40,8 +40,12 @@
 | `ExtraHoverTips` | EnchantmentModel | Resilience/BurntOut/Weakening/Serrated/Tactics/Reaction/Poisoned/Sacrifice/Cursed/Electric/Forge | 额外悬停提示 |
 | `AfterFlush(choiceContext, player, flushed, retained)` | AbstractModel | Resilience | 回合结束弃牌/保留结算后 |
 | `AfterCardDrawn(choiceContext, card, fromHandDraw)` | AbstractModel | Pandora/Cupid | 任意卡牌被抽到时（过滤 card == Card 即"抽到本卡"，参考卡牌 KinglyPunch） |
-| `AfterCardPlayed(choiceContext, cardPlay)` | AbstractModel | Stick | 任意卡牌打出后（计数） |
-| `AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource)` | AbstractModel | Poisoned/Cursed | 任意模型造成伤害后（按 cardSource 过滤本牌） |
+| `AfterCardPlayed(choiceContext, cardPlay)` | AbstractModel | Stick/HyperLink/TickTock | 任意卡牌打出后（计数/连锁触发） |
+| `AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource)` | AbstractModel | Poisoned/Cursed/Greedy | 任意模型造成伤害后（按 cardSource 过滤本牌；Greedy 用 result.WasTargetKilled 判斩杀） |
+| `EnchantDamageAdditive(decimal, ValueProp)` | EnchantmentModel | Greedy | 伤害加算修改（返回增量，默认 0） |
+| `ShouldTakeExtraTurn(Player)` / `AfterTakingExtraTurn(Player)` | RelicModel | OldPocketWatch | 额外回合判定/结算（参考遗物 PaelsEye） |
+| `ShowCounter` / `DisplayAmount` / `InvokeDisplayAmountChanged()` | RelicModel | OldPocketWatch | 遗物计数角标（参考遗物 HappyFlower） |
+| `IsUsedUp` | RelicModel | MysteriousPotion | 遗物失效置灰（参考遗物 MawBank，配 [SavedProperty] 标记） |
 | `ModifyCardPlayResultLocation(card, isAutoPlay, resources, location)` | AbstractModel | Stick | 改写卡牌打出后的去向 |
 | `AfterObtained()` | RelicModel | 全部遗物 | 遗物拾起时触发（选牌附魔流程） |
 | `HasUponPickupEffect` | RelicModel | 全部遗物 | 标记拾起即生效（驱动拾起提示 UI） |
@@ -73,7 +77,7 @@
 ### `EnchantDamageMultiplicative(decimal originalDamage, ValueProp props)`
 伤害乘算因子，默认 `1m`。
 - Heavy：`props.IsPoweredAttack() ? 2m : 1m`（与原版 Instinct 一致；`IsPoweredAttack` 排除非攻击/无力量加成的伤害）。
-- 同族钩子：`EnchantDamageAdditive` / `EnchantBlockAdditive` / `EnchantBlockMultiplicative`。
+- 同族钩子：`EnchantDamageAdditive` / `EnchantBlockAdditive` / `EnchantBlockMultiplicative`（加性钩子返回**增量**，默认 0；Greedy 用 `props.IsPoweredAttack() ? 2m : 0m` 做固定 +2）。
 
 ### `EnchantPlayCount(int originalPlayCount)`
 修改打出次数，实现"重放"。卡牌最终打出次数 = `Enchantment.EnchantPlayCount(BaseReplayCount)`。
@@ -166,6 +170,56 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - `CardSelectorPrefs(prompt, min, max)`：min=0 即"至多 N 张"。
 - `HoverTipFactory.FromEnchantment<TEnchantment>(amount)`：在遗物悬停提示中展示附魔说明。
 
+### 原版先古之民遗物池修改指导
+
+> 给原版先古（捏奥/达弗/欧洛巴斯）的选项池加遗物的标准做法。实现集中在
+> `Scripts/Data/AncientOptionRules.cs`（注入逻辑/兜底/共享助手）与
+> `Scripts/Patches/AncientRelicPoolPatches.cs`（Harmony 补丁）。
+
+**原版池结构（全部硬编码私有，无官方添加接口）**
+
+| 先古 | 池 | 生成方式 |
+| --- | --- | --- |
+| 捏奥 Neow | 私有属性 `CurseOptions`（10）/ `PositiveOptions`（14）固定数组 | 诅咒池摇 1 + 正面池洗牌取 2；过 `IsAllowedAtNeow` |
+| 达弗 Darv | 私有静态 `_validRelicSets`：11 组 `{Func<Player,bool> filter, RelicModel[] relics}`（私有嵌套 struct `ValidRelicSet`） | 每组 filter 通过则摇 1，洗牌取 3（或 2+尘封魔典） |
+| 欧洛巴斯 Orobas | 私有属性 `OptionPool1/2/3` | 各池摇 1（池1 另有 1/3 概率换成海玻璃/棱彩宝石特殊项） |
+
+原版唯一相关扩展点是遗物侧 `RelicModel.IsAllowedAtNeow(Player)`（虚方法），只能过滤不能添加。
+
+**注入方式（三个池对应各自的点）**
+
+- **达弗 → 静态列表反射注入**（`AncientOptionRules.InjectDarvRelicSet`，由 `DarvRelicSetInjectionPatch` 在首次 `GenerateInitialOptions` 前懒触发）：反射取 `_validRelicSets`（`PrivateAccess.DeclaredField`），`Activator.CreateInstance` 构造私有 struct（其构造器是 public），`IList.Add` 追加。遗物存 **canonical 实例**（`ModelDb.Relic<T>()`，原生生成时自行 `ToMutable()`）；出场条件写进组的 filter。
+  - ⚠️ 只能懒注入：读该静态字段会触发 Darv 静态构造（内部访问 ModelDb），mod 初始化时 ModelDb 未必就绪，且静态构造抛异常会让该类型**整进程不可用**。
+- **捏奥/欧洛巴斯 → 私有池 getter postfix**（`ModPatchTarget` + `MethodType.Getter`，本项目补丁体系支持私有成员）：向 `__result` 数组追加选项（`AncientOptionRules.CreateRelicOption<TRelic>`）。getter 每次调用都重建数组，直接追加不会累积；出场条件在 postfix 内检查（`__instance.Owner` 拿牌组；**Owner 为 null 是图鉴/控制台展示路径，应无条件追加**保证图鉴归属可见）。
+- 两条路径的好处：原生权重（`Rng.NextItem` 均权）、原生槽位数不变、`AllPossibleOptions` 自动覆盖（图鉴"先古"分类页与控制台 `ancient` 命令都读它）。
+
+**构建选项**（`AncientOptionRules.CreateRelicOption<TRelic>`）：`EventOption.FromRelic(relic.ToMutable(), ancient, onChosen, textKey)`——textKey 按 `{ANCIENT}.pages.INITIAL.options.{RELIC}` 约定，本地化缺失时回退遗物自身 title/description，**无需给 ancients 表加键**；onChosen = `RelicCmd.Obtain(relic, owner)` + 反射调 protected `AncientEventModel.Done()`（默认 DONE 页）。
+
+**兜底**：Entry 中先古 patcher `PatchAll()` 失败 → `AncientOptionRules.RegisterFallback()` 改用 RitsuLib `RegisterAncientOption<TAncient>` 追加式注册（选项出现在列表末尾，权重靠工厂内 `ancient.Rng` 掷骰近似：命中率 ≈ 1/(池大小+1)）。兜底规则幂等且开 `SkipDuplicateTextKeys`；达弗注入运行期失败也会单独降级（`RegisterDarvFallback`）。
+
+**添加新先古遗物的步骤**
+
+1. 遗物类：`Rarity => RelicRarity.Ancient` + `[RegisterRelic(typeof(EventRelicPool))]`（原版先古/事件遗物同款池，不进抓袋）。
+2. 选定目标先古与池；在 `AncientRelicPoolPatches.cs` 加 getter postfix（捏奥/欧洛巴斯式），或在 `InjectDarvRelicSet` 里加组（达弗式）。
+3. 出场条件：牌组门槛用 `AncientOptionRules.CountEnchantable<TEnchantment>(owner, filter)`（忽略占用地评估可附魔）。
+4. 在 `RegisterFallback` 里加同遗物的兜底规则（概率 ≈ 1/(池大小+1)）。
+5. 本地化 relics.json 照常；图标 85/256 占位。
+
+
+### 遗物计数 / 失效 / 额外回合模式
+
+- **计数器**（HappyFlower 模式）：`ShowCounter => true` + `DisplayAmount` 覆写 + `[SavedProperty] int Count`（setter 内 `AssertMutable()` + `InvokeDisplayAmountChanged()`）——遗物实例整局存在，SavedProperty 同时解决跨战斗与读档持久化。
+- **失效**（MawBank 模式）：`IsUsedUp` 覆写 + SavedProperty 布尔，置位时 `Status = RelicStatus.Disabled`。
+- **额外回合**（PaelsEye 模式）：`ShouldTakeExtraTurn(Player)` 返回 true → 回合结束插入额外回合 → `AfterTakingExtraTurn` 消费标记并 Flash。
+- **扣最大生命**（LeafyPoultice 模式）：`CreatureCmd.LoseMaxHp(new ThrowingPlayerChoiceContext(), Owner.Creature, amount, isFromCard: false)`。
+- **选牌附加过滤**：`CardSelectCmd.FromDeckForEnchantment(player, enchantment, amount, additionalFilter, prefs)` 重载可在附魔 CanEnchant 之外叠加遗物侧条件（机器残片的费用≤2）。
+
+### 神秘药剂的「下一次附魔层数翻倍」
+
+`MysteriousPotionPatch`：`CardCmd.Enchant(EnchantmentModel, CardModel, decimal)` 前缀 `ref amount ×2`（与 EnchantLimitEnchantCommandPatch 同为前缀；OnEnchant/堆叠均按翻倍后执行）。生效后调遗物 `ConsumeDoubling()` 失效。
+- ⚠️ **前缀执行顺序是关键**：EnchantLimitEnchantCommandPatch 在附加槽路径上**前缀阶段就按当前 amount 完成 Attach**——若它先执行，附加槽拿到的是未翻倍层数。故本补丁 Prefix 标 `[HarmonyPriority(Priority.First)]`（Harmony 2 优先级数值越小越先执行，默认 Normal=400），必须先于一切消费 amount 的前缀。
+- 已知取舍：附魔抛异常时翻倍仍被消耗（正常途径不会触发）。
+
 ### 商店附魔遗物池（19 个遗物，见 Plan/ShopEnchantRelics.md）
 
 - **中间基类 `ShopEnchantRelicBase<TEnchantment>`**（`Scripts/Relics/`）：在 `EnchantOnPickupRelicBase` 上统一覆写 `MerchantCost`——普通/罕见/稀有 → 75/125/175（低于原版 175/225/275）。个别遗物再覆写（如 LionSculpture 定价 225）。
@@ -198,7 +252,11 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 | `HoverTipFactory.FromKeyword / FromPower<T> / FromOrb<T> / FromForge() / Static(StaticHoverTip.X)` | 悬停提示工厂 | 各附魔 |
 | `CardCmd.TransformToRandom(card, rng)` → `CardPileAddResult{success, cardAdded}` | 原牌堆原位随机变化（选项经稀有度/战斗可生成过滤，参考 EntropyPower） | Pandora |
 | `CardPileCmd.Add(IEnumerable<CardModel>, PileType.Hand)` | 把任意牌堆的卡牌移入手牌（不算抽牌） | Cupid |
-| `PlayerCombatState.AllCards` | 本场战斗玩家全部卡牌（跨牌堆，参考 SummonForth） | Cupid |
+| `PlayerCombatState.AllCards` | 本场战斗玩家全部卡牌（跨牌堆，参考 SummonForth） | Cupid/HyperLink |
+| `CardCmd.AutoPlay(choiceContext, card, null)` | 自动打出任意牌堆中的卡牌（单体目标自动随机选敌；参考 HellraiserPower/StampedePower） | HyperLink |
+| `PlayerCmd.GainGold(int, Player)` | 获得金币（参考卡牌 HandOfGreed） | Greedy |
+| `CreatureCmd.LoseMaxHp(choiceContext, creature, amount, isFromCard: false)` | 失去最大生命值（参考遗物 LeafyPoultice/SereTalon） | TouchOfMidas |
+| `DamageResult.WasTargetKilled` | 该段伤害是否造成斩杀 | Greedy |
 
 ---
 
@@ -252,6 +310,7 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - **UI 即时刷新**：`EnchantmentChanged` 事件无法外部触发（event），用 PrivateAccess 读背字段委托直接 Invoke（等效原生 EnchantInternal 末尾）。
 - **卡面多图标**：`NCard.UpdateEnchantmentVisuals`（private）postfix，Duplicate `%Enchantment` tab 后**挂为主槽 tab 的子节点、竖排在其下方**（跟随主槽显隐与星标上移；vfx 隐藏主槽时附加槽自动隐藏）。复制的 tab 共享 ShaderMaterial 须 `Material.Duplicate()` 独立化（置灰参数 h/s/v 为 NCard 私有静态 StringName，PrivateAccess 读取）；**复制模板优先选首个附加槽 tab，不能直接 Duplicate 挂了附加槽的主槽 tab**（会把既有附加槽一起复制进去造成嵌套重复图标）；附加槽 `StatusChanged` 自管订阅（原生 `_subscribedEnchantment` 单订阅会抛异常）；`OnReturnedFromPool`/`OnFreedToPool` 时销毁复制 tab 防对象池串卡。
 - **已知裁剪**：M12（首回合 `ShouldStartAtBottomOfDrawPile` 沉底覆盖附加槽）未实现——原版仅 Imbued 使用该属性，本 Mod 及商店池引用的附魔均不涉及；`NDeckHistoryEntry`/`NCardEnchantVfx` 仍只显示主槽（显示层降级，逻辑不受影响）；`NEnchantPreview` 已由 `EnchantLimitPreviewPatch` 适配多槽（新附魔以附加槽附着到预览克隆）。
+- **可堆叠放开**：`StackableEnchantmentPatch` 对 `EnchantmentModel.IsStackable` getter 做 postfix——`ShowAmount` 为 true 的附魔（含原版，sealed 不可覆写）统一视为可堆叠；本 Mod 附魔走基类覆写 `IsStackable => ShowAmount`（getter 不经过基类，不吃该补丁）。同型堆叠路由见 `EnchantLimitEnchantCommandPatch`（主槽同型走原生堆叠、附加槽同型走 `StackAmount`），同型永不占新槽。
 
 ### 上限提升的消费方
 
@@ -265,3 +324,4 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - **附魔移除不回滚**：`ClearEnchantmentInternal` 只解除引用，`OnEnchant` 加的关键词/费用修改会残留。功能块 D（驱散之泉事件）实现移除时，需自行 `RemoveKeyword` / 重置费用（参考 `CardModel.DowngradeInternal` 的重置+重放模式）。
 - **Stick 与重放的交互**：重放序列中每次打出都会计数，次数用尽后当次序列的后续打出不再回手（符合"前 Amount 次"语义）。
 - **Weakening/Serrated 与自指目标**：攻击牌目标默认为敌人；若未来出现 `TargetType.Self` 的攻击牌，`cardPlay.Target` 可能是友方，届时需加目标阵营判断。
+- **先古池注入的私有成员依赖**：`Darv._validRelicSets` / `Darv.ValidRelicSet` / `Neow.CurseOptions` / `Orobas.OptionPool1` / `Darv.GenerateInitialOptions` 均为私有成员，游戏版本更新后需回归验证（失败会自动降级为 RitsuLib 追加式注册，看日志中 `ancient` 相关 Error）。先古选项的实机验证点：三先古均出现本 Mod 遗物选项、权重正常、达弗条件门槛生效、选择后获得遗物并进入 DONE 页、图鉴"先古"分类页归属正确。

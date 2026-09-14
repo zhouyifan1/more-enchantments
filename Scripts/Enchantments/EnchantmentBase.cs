@@ -12,4 +12,8 @@ public abstract class MoreEnchantmentsEnchantmentBase : ModEnchantmentTemplate
     public override EnchantmentAssetProfile AssetProfile => new(
         IconPath: $"res://MoreEnchantments/images/enchantments/{GetType().Name}.png"
     );
+
+    // 可堆叠约定（功能块 E）：卡面显示层数角标（ShowAmount）的附魔默认可堆叠，
+    // 同卡重复附着同型时叠加层数而不占新槽位；特例（无层数可堆叠/有层数不可堆叠）在具体附魔类显式覆写
+    public override bool IsStackable => ShowAmount;
 }
