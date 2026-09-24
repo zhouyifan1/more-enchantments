@@ -116,3 +116,59 @@ public class OrobasPoolOneOptionPatch : IPatchMethod
         }
     }
 }
+
+/// <summary>
+/// 诺奴佩普选项池（池1）注入：postfix 私有 OptionPool getter，向候选数组追加「丁香与醋栗」（无条件）。
+/// 之后原生流程自动生效：洗牌取 3、AllPossibleOptions 覆盖（图鉴归属与控制台可见）。
+/// </summary>
+public class NonupeipePoolOptionPatch : IPatchMethod
+{
+    public static string PatchId => "ancient_nonupeipe_pool_option";
+
+    public static string Description => "诺奴佩普选项池：OptionPool getter 追加丁香与醋栗选项";
+
+    public static bool IsCritical => false;
+
+    public static ModPatchTarget[] GetTargets() =>
+        [new(typeof(Nonupeipe), "OptionPool", MethodType.Getter)];
+
+    public static void Postfix(Nonupeipe __instance, ref IEnumerable<EventOption> __result)
+    {
+        try
+        {
+            __result = [.. __result, AncientOptionRules.CreateRelicOption<LilacAndHawthorn>(__instance)];
+        }
+        catch (Exception ex)
+        {
+            Entry.Logger.Error($"[NonupeipePoolOptionPatch] 追加丁香与醋栗选项失败: {ex}");
+        }
+    }
+}
+
+/// <summary>
+/// 坦克斯选项池注入：postfix 私有 BaseOptionPool getter，向候选数组追加「钢剑与银剑」（无条件）。
+/// 之后原生流程自动生效：洗牌取 3、AllPossibleOptions 覆盖（图鉴归属与控制台可见）。
+/// </summary>
+public class TanxPoolOptionPatch : IPatchMethod
+{
+    public static string PatchId => "ancient_tanx_pool_option";
+
+    public static string Description => "坦克斯选项池：BaseOptionPool getter 追加钢剑与银剑选项";
+
+    public static bool IsCritical => false;
+
+    public static ModPatchTarget[] GetTargets() =>
+        [new(typeof(Tanx), "BaseOptionPool", MethodType.Getter)];
+
+    public static void Postfix(Tanx __instance, ref IEnumerable<EventOption> __result)
+    {
+        try
+        {
+            __result = [.. __result, AncientOptionRules.CreateRelicOption<SteelSwordAndSilverSword>(__instance)];
+        }
+        catch (Exception ex)
+        {
+            Entry.Logger.Error($"[TanxPoolOptionPatch] 追加钢剑与银剑选项失败: {ex}");
+        }
+    }
+}

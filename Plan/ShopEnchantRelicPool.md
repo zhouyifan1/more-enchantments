@@ -70,7 +70,7 @@ public class XxxRelic : EnchantOnPickupRelicBase<YyyEnchantment>
 
 ### 2.4 设计登记
 
-在 `Plan/Relics.md` 的设计表中补一行（名称/效果/稀有度/flavor 等），备注栏注明「商店池」。
+在 `Plan/Relics/ShopEnchantRelics.md` 的设计表中补一行（名称/效果/稀有度/flavor 等）。
 
 ## 3. 可选覆写点
 

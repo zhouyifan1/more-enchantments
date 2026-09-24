@@ -106,5 +106,14 @@
   "MORE_ENCHANTMENTS_RELIC_OLD_POCKET_WATCH.flavor": "A thousand years on, its hands still stubbornly march forward.",
   "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.title": "Touch of Midas",
   "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.description": "On pickup, lose {MaxHp} Max HP, choose up to {Cards} Attack cards from your deck and enchant them with [gold]Greedy[/gold] {EnchantAmount}.",
-  "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.flavor": "The magic of the golden touch."
+  "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.flavor": "The magic of the golden touch.",
+  "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.title": "Silver Metal",
+  "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.description": "[gold]Heavy[/gold] enchantments reduce this card's Energy cost by 1 instead of increasing it.",
+  "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.flavor": "You can feel a strange connection through it.",
+  "MORE_ENCHANTMENTS_RELIC_LILAC_AND_HAWTHORN.title": "Lilac and Hawthorn",
+  "MORE_ENCHANTMENTS_RELIC_LILAC_AND_HAWTHORN.description": "The first time each turn you play an enchanted card, gain {Energy} Energy.",
+  "MORE_ENCHANTMENTS_RELIC_LILAC_AND_HAWTHORN.flavor": "The funeral flowers smell lovely.",
+  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.title": "Steel Sword and Silver Sword",
+  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.description": "Whenever you play an Attack, add 1 count, resetting at the start of your turn. Each turn, your odd-numbered Attacks are enchanted with [gold]Sharp[/gold] {SharpAmount} before being played, even-numbered ones with [gold]Weakening[/gold] {WeakeningAmount}.",
+  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.flavor": "Steel for the wicked, silver for the monsters."
 }

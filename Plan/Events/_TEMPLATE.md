@@ -7,8 +7,8 @@
 | 项 | 值 | 说明 |
 | --- | --- | --- |
 | 类名 (PascalCase) | `EnchantingAltarEvent` | 发布后 Entry ID 固定为 `MORE_ENCHANTMENTS_EVENT_ENCHANTING_ALTAR_EVENT`，不得更改 |
-| 注册方式 | `[RegisterActEvent(typeof(Glory))]` / `[RegisterSharedEvent]` | 章节限定 / 通用事件 |
-| 生成条件 (IsAllowed) | 牌组中至少有一张可附魔的牌 | 留空表示无条件；`[RegisterSharedEvent]` 必填 |
+| 注册方式 | `[RegisterActEvent(typeof(Overgrowth))]`<br />`[RegisterActEvent(typeof(Underdocks))]` | 见下方「注册方式」一节，四选一 |
+| 生成条件 (IsAllowed) | 牌组中至少有一张可附魔的牌 | 留空表示无条件（返回 base，即恒 true）；两种注册方式都可覆写 |
 | 布局类型 | Normal / Combat | Combat 需另填「遭遇」并在备注中描述遭遇设计 |
 | 立绘 | `res://MoreEnchantments/images/events/EnchantingAltarEvent.png` | 未绘制前复制重命名 `res://DefaultPics/icon256.png` 占位 |
 
@@ -57,6 +57,35 @@ INITIAL ──[TAKE_DAMAGE]──> CHOOSE_TYPE ──[CHOOSE_POTIONS]──> POT
 > 符文暗了下去，祭坛恢复了沉默。
 
 （结束页用 `SetEventFinished(描述)` 关闭事件，无选项。）
+
+## 注册方式
+
+事件进入生成池的规则：一个章节的 run 事件池 = 该章节 `ActModel.AllEvents`（章节限定事件）+ `ModelDb.AllSharedEvents`（共享事件），洗牌后生成（`ActModel.GenerateRooms`）；事件房间实际开出前再过一次 `IsAllowed(IRunState)`。注册方式四选一：
+
+| 方式 | 写法 | 效果 | 适用 |
+| --- | --- | --- | --- |
+| CLR 注解·章节限定（首选） | `[RegisterActEvent(typeof(Glory))]` | 只进入 Glory 章节的事件池 | 绝大多数事件；由 `ModTypeDiscoveryHub` 自动发现 |
+| CLR 注解·共享 | `[RegisterSharedEvent]` | 进入**所有章节**的事件池 | 通用事件 |
+| 代码注册·章节限定 | `ModContentRegistry.RegisterActEvent<TEvent, TAct>()`（或 `(eventType, actType)` 非泛型重载） | 同上，但注册时机/条件由代码控制 | 批量注册、条件注册（如按 Mod 设置开关） |
+| 代码注册·共享 | `ModContentRegistry.RegisterSharedEvent<TEvent>()`（或 `(eventType)` 重载） | 同上 | 同上 |
+
+说明：
+
+- 本项目约定优先用 CLR 注解（注册点贴近模型类）；同一事件只用一种注册来源，不要注解和代码重复注册。
+- 两种注册方式都可以覆写 `IsAllowed(IRunState)` 加生成条件（章节限定事件同样生效，如 `AncientTechnologyEvent`）；共享事件没有章节约束，生成条件全写在 `IsAllowed` 里。
+- 原版「时间线/Epoch 解锁」过滤（`Event1Epoch` 等）只针对原版事件，不影响 Mod 事件。
+- 先古之民（Ancient）是另一类内容（`ModAncientEventTemplate`），对应注解 `[RegisterActAncient(typeof(XxxAct))]` / `[RegisterSharedAncient]` + `IsAllowed`/`IsValidForAct`，不要把两者混淆。
+
+可用章节类（`MegaCrit.Sts2.Core.Models.Acts`，按 run 内顺序，`ModelDb.Acts`）：
+
+| 章节类 | 章节位置 |
+| --- | --- |
+| `Overgrowth` | 第一章（两个变体之一） |
+| `Underdocks` | 第一章（两个变体之一） |
+| `Hive` | 第二章 |
+| `Glory` | 第三章 |
+
+第一章会在 `Overgrowth` / `Underdocks` 两个变体中随机选取，想让事件"第一章必出"需要同时注册两个章节（写两个 `[RegisterActEvent]` 注解，或改用 `[RegisterSharedEvent]` + `IsAllowed` 里判断当前章节）。（另有 `DeprecatedAct` 为废弃占位，勿用。）
 
 ## 联动内容
 

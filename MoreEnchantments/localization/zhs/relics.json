@@ -106,5 +106,14 @@
   "MORE_ENCHANTMENTS_RELIC_OLD_POCKET_WATCH.flavor": "跨越千年的时光，指针仍在倔强地向前走动。",
   "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.title": "弥达斯之触",
   "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.description": "拾起时，失去{MaxHp}点最大生命值，从你的牌组中选择至多{Cards}张攻击牌，为其附加[gold]贪婪[/gold]{EnchantAmount}层。",
-  "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.flavor": "点石成金的魔力。"
+  "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.flavor": "点石成金的魔力。",
+  "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.title": "银白金属",
+  "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.description": "附魔[gold]沉重[/gold]增加耗能的效果改为减少1点耗能。",
+  "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.flavor": "你能通过它感到一种连结感。",
+  "MORE_ENCHANTMENTS_RELIC_LILAC_AND_HAWTHORN.title": "丁香与醋栗",
+  "MORE_ENCHANTMENTS_RELIC_LILAC_AND_HAWTHORN.description": "每回合你第一次打出有附魔的牌时，获得{Energy}点能量。",
+  "MORE_ENCHANTMENTS_RELIC_LILAC_AND_HAWTHORN.flavor": "葬礼上的花朵很香。",
+  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.title": "钢剑与银剑",
+  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.description": "打出攻击牌时计数+1，计数在你的回合开始时清零。每回合你第奇数次打出的攻击牌在打出前附魔[gold]锋利[/gold]{SharpAmount}层，第偶数次打出的攻击牌在打出前附魔[gold]弱化[/gold]{WeakeningAmount}层。",
+  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.flavor": "钢剑惩奸恶，银剑斩妖魔。"
 }

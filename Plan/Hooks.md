@@ -40,7 +40,9 @@
 | `ExtraHoverTips` | EnchantmentModel | Resilience/BurntOut/Weakening/Serrated/Tactics/Reaction/Poisoned/Sacrifice/Cursed/Electric/Forge | 额外悬停提示 |
 | `AfterFlush(choiceContext, player, flushed, retained)` | AbstractModel | Resilience | 回合结束弃牌/保留结算后 |
 | `AfterCardDrawn(choiceContext, card, fromHandDraw)` | AbstractModel | Pandora/Cupid | 任意卡牌被抽到时（过滤 card == Card 即"抽到本卡"，参考卡牌 KinglyPunch） |
-| `AfterCardPlayed(choiceContext, cardPlay)` | AbstractModel | Stick/HyperLink/TickTock | 任意卡牌打出后（计数/连锁触发） |
+| `AfterCardPlayed(choiceContext, cardPlay)` | AbstractModel | Stick/HyperLink/TickTock/LilacAndHawthorn | 任意卡牌打出后（计数/连锁触发/每回合首次检测） |
+| `BeforeCardPlayed(cardPlay)` | AbstractModel | SteelSwordAndSilverSword | 任意卡牌打出前（无 choiceContext；打出前附魔本次结算即生效，参考遗物 PaelsEye） |
+| `AfterPlayerTurnStart(choiceContext, player)` | AbstractModel | LilacAndHawthorn/SteelSwordAndSilverSword | 玩家回合开始（遗物侧"每回合"标记/计数复位点，需过滤 player == Owner） |
 | `AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource)` | AbstractModel | Poisoned/Cursed/Greedy | 任意模型造成伤害后（按 cardSource 过滤本牌；Greedy 用 result.WasTargetKilled 判斩杀） |
 | `EnchantDamageAdditive(decimal, ValueProp)` | EnchantmentModel | Greedy | 伤害加算修改（返回增量，默认 0） |
 | `ShouldTakeExtraTurn(Player)` / `AfterTakingExtraTurn(Player)` | RelicModel | OldPocketWatch | 额外回合判定/结算（参考遗物 PaelsEye） |
@@ -50,6 +52,8 @@
 | `AfterObtained()` | RelicModel | 全部遗物 | 遗物拾起时触发（选牌附魔流程） |
 | `HasUponPickupEffect` | RelicModel | 全部遗物 | 标记拾起即生效（驱动拾起提示 UI） |
 | `MerchantCost` | RelicModel | ShopEnchantRelicBase/SmallWhetstone/HalfBowlWarPaint/LionSculpture | 商店售价定价覆写 |
+| `IsAllowed(IRunState)` | EventModel | AncientTechnologyEvent | 事件出现条件（牌组 ≥1 张已附魔牌且 ≥1 张无附魔牌） |
+| `GenerateInitialOptions()` / `SetEventFinished(LocString)` | EventModel | AncientTechnologyEvent | 初始页选项（条件性加入）/ 结束页 |
 
 ---
 
@@ -98,6 +102,25 @@
 3. 战斗钩子中更新 `DynamicVars["Returns"].BaseValue`，卡牌下次重绘（回手/换堆等）即显示新值。
 - Stick 用此模式实现"下{Returns}次打出时回到手牌"逐次递减。变量值随 `DeepCloneFields` 克隆传递，只影响战斗克隆体。
 - 派生数值同理：Sacrifice 用 `IntVar("StrengthGain")` 在 `OnEnchant` 同步为 `2 * Amount`，卡面直接展示最终力量值（`{StrengthGain}`），效果结算时也读该变量，避免文本写 `{Amount}×2` 这类无法求值的表达式。
+
+### 同一附魔按卡牌种类差异化（效果与卡面文本）
+
+**效果侧（简单）**：附魔实例每张卡一份可变副本，钩子内直接分支 `Card.Type` / `Card.Keywords` / `Card.EnergyCost` 即可（`OnPlay`、`AfterCardPlayed`、`AfterDamageGiven` 等都拿得到 `Card`）。
+
+**卡面文本侧（需要补丁，即"方案 B"，当前未启用——首个需求出现时按下述实现）**：
+- 限制：`EnchantmentModel.ExtraCardText` 是 **private 非 virtual**（固定查 `{ID}.extraCardText` 单键），`DynamicExtraCardText` / `DynamicDescription` 也是**非 virtual**（卡面渲染入口在 `CardModel.cs:1143` 读 `Enchantment?.DynamicExtraCardText`）——无法用 override 换模板。
+- 做法：Harmony patch `EnchantmentModel.DynamicExtraCardText` 的 getter（`ModPatchTarget` + `MethodType.Getter`），对本 Mod 附魔按 `Card?.Type` 返回不同本地化键（如 `{ID}.extraCardText.attack` / `.skill`），并照抄原版收尾三行保证占位符照常生效：
+  ```csharp
+  LocString text = new("enchantments", id.Entry + ".extraCardText." + suffix);
+  text.Add("Amount", Amount);
+  // 原版还会按 Card.TargetType 注入 "TargetType" 变量，需要时一并补上
+  DynamicVars.AddTo(text);
+  __result = text;   // getter 前缀替换返回值；Status == Disabled 时保持原版隐藏语义（返回 null）
+  ```
+- 悬停提示里的附魔说明（`DynamicDescription`）单一文本，同理可 patch 其 getter；选牌界面（遗物拾起）显示的也是它。
+- 可条件化的 virtual 属性（无需补丁）：`HasExtraCardText` / `ShowAmount` / `DisplayAmount` / `ExtraHoverTips` 都可按 `Card?.Type` 返回不同值。
+- 多附魔兼容：`EnchantLimitExtraCardTextPatch` 在附加槽上也是逐附魔读 `DynamicExtraCardText`，本补丁对附加槽同样生效。
+- 轻量替代（备查，"方案 A"）：模板只写 `{EffectText}` 占位 + `StringVar`（原版类型）在 `OnEnchant` 里按类型填文本——无补丁但整条结构固定、子文本不能再嵌 `{Amount}`。需要整条结构/颜色差异时用方案 B。
 
 ---
 
@@ -183,6 +206,8 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 | 捏奥 Neow | 私有属性 `CurseOptions`（10）/ `PositiveOptions`（14）固定数组 | 诅咒池摇 1 + 正面池洗牌取 2；过 `IsAllowedAtNeow` |
 | 达弗 Darv | 私有静态 `_validRelicSets`：11 组 `{Func<Player,bool> filter, RelicModel[] relics}`（私有嵌套 struct `ValidRelicSet`） | 每组 filter 通过则摇 1，洗牌取 3（或 2+尘封魔典） |
 | 欧洛巴斯 Orobas | 私有属性 `OptionPool1/2/3` | 各池摇 1（池1 另有 1/3 概率换成海玻璃/棱彩宝石特殊项） |
+| 诺奴佩普 Nonupeipe | 私有属性 `OptionPool`（9） | 洗牌取 3；香草条件项 BeautifulBracelet（牌组 Swift 可附魔 ≥4 才加入） |
+| 坦克斯 Tanx | 私有属性 `BaseOptionPool`（9） | 洗牌取 3；香草条件项 TriBoomerang（牌组 Instinct 可附魔 ≥3 才加入） |
 
 原版唯一相关扩展点是遗物侧 `RelicModel.IsAllowedAtNeow(Player)`（虚方法），只能过滤不能添加。
 
@@ -206,6 +231,19 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 5. 本地化 relics.json 照常；图标 85/256 占位。
 
 
+### 「打出前附着附魔」模式（钢剑与银剑）
+
+- 挂点 `BeforeCardPlayed(CardPlay)`（无 choiceContext，参考遗物 PaelsEye）：附魔在卡牌结算前附着，**本次打出即生效**（锋利加伤进当次伤害计算、弱化经 OnPlay 分发进当次目标——多槽 OnPlay 分发补丁覆盖附加槽）。
+- 作用于战斗克隆体（§0.3），不会污染牌组；重放序列每次打出都会触发计数与附着。
+- 预判用 `ModelDb.Enchantment<T>().CanEnchant(card)`：多槽补丁（M1）已把 CanEnchant 扩展为全路由"能否附着"判定（含同型堆叠/免费槽/占用中立评估），**满槽或条件不满足时返回 false，跳过即可避免 CardCmd.Enchant 抛异常**。
+- 遗物实例整局存在："每回合"状态用普通字段 + `AfterPlayerTurnStart` 复位（`player == Owner` 过滤）即可，无需 SavedProperty；跨战斗继承才需要（参考老旧的怀表）。
+
+### 「遗物改写附魔行为」模式（银白金属 SilverMetal）
+
+- 附魔侧实时判定：`OnEnchant` 里读 `Card.Owner?.Relics.OfType<TRelic>().Any()` 决定行为分支（如沉重的 +1/-1 耗能）。
+- 存量修正：遗物 `AfterObtained` 遍历 `PileType.Deck.GetPile(Owner).Cards` 翻转已附魔卡（`EnchantLimitService.HasEnchantment<T>` 判持有，费用用 `SetCustomBaseCost(GetWithModifiers(CostModifiers.None) ± delta)`）。
+- ⚠️ **读档顺序陷阱**：`Player.LoadInventory` 先 `PopulateDeck`（`CardModel.FromSerializable` 重置状态并重放附魔 `ModifyCard/OnEnchant`）后 `PopulateRelics`——**重放 OnEnchant 时遗物不在持有者身上**，且 `Card.Owner` 可能为 null。涉及"遗物在场与否"的附魔重放逻辑必须配一个 `Player.FromSerializable` postfix 做读档后统一修正（见 `SilverMetalLoadFixPatch`）。
+
 ### 遗物计数 / 失效 / 额外回合模式
 
 - **计数器**（HappyFlower 模式）：`ShowCounter => true` + `DisplayAmount` 覆写 + `[SavedProperty] int Count`（setter 内 `AssertMutable()` + `InvokeDisplayAmountChanged()`）——遗物实例整局存在，SavedProperty 同时解决跨战斗与读档持久化。
@@ -220,7 +258,7 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - ⚠️ **前缀执行顺序是关键**：EnchantLimitEnchantCommandPatch 在附加槽路径上**前缀阶段就按当前 amount 完成 Attach**——若它先执行，附加槽拿到的是未翻倍层数。故本补丁 Prefix 标 `[HarmonyPriority(Priority.First)]`（Harmony 2 优先级数值越小越先执行，默认 Normal=400），必须先于一切消费 amount 的前缀。
 - 已知取舍：附魔抛异常时翻倍仍被消耗（正常途径不会触发）。
 
-### 商店附魔遗物池（19 个遗物，见 Plan/ShopEnchantRelics.md）
+### 商店附魔遗物池（19 个遗物，见 Plan/Relics/ShopEnchantRelics.md）
 
 - **中间基类 `ShopEnchantRelicBase<TEnchantment>`**（`Scripts/Relics/`）：在 `EnchantOnPickupRelicBase` 上统一覆写 `MerchantCost`——普通/罕见/稀有 → 75/125/175（低于原版 175/225/275）。个别遗物再覆写（如 LionSculpture 定价 225）。
 - **随机升级模式**（SmallWhetstone/HalfBowlWarPaint，参考原版 Whetstone/WarPaint，不走附魔基类）：
@@ -233,6 +271,24 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
   ```
   - `StableShuffle(Owner.RunState.Rng.Niche)`：扩展方法（`MegaCrit.Sts2.Core.Extensions`），用 Niche 随机流洗牌，不污染主随机数。
   - `c.IsUpgradable` 过滤不可升级卡；HalfBowlWarPaint 把 `CardType.Attack` 换成 `CardType.Skill`。
+
+---
+
+## 4.5 事件（EventModel / RitsuLib ModEventTemplate）
+
+首个实现：`Scripts/Events/AncientTechnologyEvent.cs`（设计文档 `Plan/Events/AncientTechnologyEvent.md`）。
+
+- **注册**：`[RegisterActEvent(typeof(Glory))]` 章节限定（`MegaCrit.Sts2.Core.Models.Acts`）；通用事件用 `[RegisterSharedEvent]` + 重写 `IsAllowed`。立绘走 `EventAssetProfile(InitialPortraitPath: ...)`。
+- **页面/选项**：`GenerateInitialOptions()` 返回初始页选项；选项回调里 `SetEventFinished(PageDescription("XXX_END"))` 结束。`InitialOptionKey("KEY")` / `PageDescription("PAGE")` 由模板生成 `{Entry}.pages.{页}.options.{KEY}` / `{Entry}.pages.{页}.description` 本地化键。条件性选项（如持有某遗物才出现）直接在 `GenerateInitialOptions` 里按 `Owner.Relics` 决定是否加入列表。
+- **自定义过滤选牌**：`CardSelectCmd.FromDeckGeneric(player, new CardSelectorPrefs(prompt, min, max), filter)`——filter 用 `EnchantLimitService.GetEnchantmentCount(card) > 0` 筛已附魔牌（`== 0` 筛无附魔牌）。`min == max` 且候选数 ≤ min 时自动全选不弹窗（只剩一个合法目标时复制直接结算）。自定义 prompt：`new LocString("events", $"{Id.Entry}.selectPrompt.{KEY}")`。
+- **遗物替换**：`RelicCmd.Replace(original, replace)` = 原位 Remove + Obtain（栏位顺序保持，`AfterObtained` 正常触发——银白金属的费用翻转自动执行）。新遗物实例用 `ModelDb.Relic<T>().ToMutable()`。
+- **附魔复制/翻倍**（`EnchantLimitService` 公开 API，`ExtraEnchantmentStore` 配套 `DetachAll`/`SyncAndRefresh`）：
+  - `GetEnchantmentSnapshot(card)` → `EnchantmentSnapshot(ModelId, int Amount)` 列表（槽序，主槽在前），只读不移除；`RemoveAllEnchantments(card)` 是其移除版（先 `DetachAll` 附加槽再 `CardCmd.ClearEnchantment` 主槽，避免触发晋升），**不回滚 OnEnchant 修改**（§8 既有结论，移除后旧卡残留关键词/费用修改）。
+  - `ApplyEnchantmentSnapshot(card, snapshot)`：逐条 `SaveUtil.EnchantmentOrDeprecated(id).ToMutable()` 重建实例，槽位满（且非同型堆叠）或 `EvaluateIgnoringOccupancy` 不兼容则丢弃，否则 `CardCmd.Enchant` 施加（"兼容则施加，反之不施加"）。
+  - `DoubleEnchantmentAmounts(card)`：主槽+附加槽 `Amount ×2`（与原版同型堆叠语义一致——只改层数不重放 ModifyCard/OnEnchant；Stick 的 `{Returns}` 这类 OnEnchant 同步变量不会刷新，与原版堆叠同款取舍）。
+  - ⚠️ 复制走 `CardCmd.Enchant`，会被 `MysteriousPotionPatch` 的"下一次附魔翻倍"前缀拦截（边缘交互，暂不处理）。
+  - 已知边界：目标卡由玩家自由选（任意无附魔牌），若它对来源的全部附魔都不兼容（如无附魔牌只有技能牌而来源是"沉重"），复制结果为空——`ApplyEnchantmentSnapshot` 返回 0，事件照常结束。
+  - 实机验证点：复制后来源牌附魔不变、目标牌只获得兼容附魔、读档后状态保持、翻倍后卡面角标更新。
 
 ---
 
@@ -250,6 +306,7 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 | `EnchantmentStatus.Normal / Disabled` | 附魔状态：置灰图标、隐藏追加文本 | Stick（Glam 同用法） |
 | `Card.CombatState.HittableEnemies` | 当前全体可攻击敌人 | Weakening/Serrated |
 | `HoverTipFactory.FromKeyword / FromPower<T> / FromOrb<T> / FromForge() / Static(StaticHoverTip.X)` | 悬停提示工厂 | 各附魔 |
+| `ModelDb.DebugEnchantments` | 全量附魔枚举（含 Mod 附魔；含 Deprecated/Mocks 占位类需排除） | RandomEnchantService（随机附魔权重表构建与候选筛选，方案见 Plan/RandomEnchantment.md） |
 | `CardCmd.TransformToRandom(card, rng)` → `CardPileAddResult{success, cardAdded}` | 原牌堆原位随机变化（选项经稀有度/战斗可生成过滤，参考 EntropyPower） | Pandora |
 | `CardPileCmd.Add(IEnumerable<CardModel>, PileType.Hand)` | 把任意牌堆的卡牌移入手牌（不算抽牌） | Cupid |
 | `PlayerCombatState.AllCards` | 本场战斗玩家全部卡牌（跨牌堆，参考 SummonForth） | Cupid/HyperLink |
@@ -311,9 +368,11 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - **卡面多图标**：`NCard.UpdateEnchantmentVisuals`（private）postfix，Duplicate `%Enchantment` tab 后**挂为主槽 tab 的子节点、竖排在其下方**（跟随主槽显隐与星标上移；vfx 隐藏主槽时附加槽自动隐藏）。复制的 tab 共享 ShaderMaterial 须 `Material.Duplicate()` 独立化（置灰参数 h/s/v 为 NCard 私有静态 StringName，PrivateAccess 读取）；**复制模板优先选首个附加槽 tab，不能直接 Duplicate 挂了附加槽的主槽 tab**（会把既有附加槽一起复制进去造成嵌套重复图标）；附加槽 `StatusChanged` 自管订阅（原生 `_subscribedEnchantment` 单订阅会抛异常）；`OnReturnedFromPool`/`OnFreedToPool` 时销毁复制 tab 防对象池串卡。
 - **已知裁剪**：M12（首回合 `ShouldStartAtBottomOfDrawPile` 沉底覆盖附加槽）未实现——原版仅 Imbued 使用该属性，本 Mod 及商店池引用的附魔均不涉及；`NDeckHistoryEntry`/`NCardEnchantVfx` 仍只显示主槽（显示层降级，逻辑不受影响）；`NEnchantPreview` 已由 `EnchantLimitPreviewPatch` 适配多槽（新附魔以附加槽附着到预览克隆）。
 - **可堆叠放开**：`StackableEnchantmentPatch` 对 `EnchantmentModel.IsStackable` getter 做 postfix——`ShowAmount` 为 true 的附魔（含原版，sealed 不可覆写）统一视为可堆叠；本 Mod 附魔走基类覆写 `IsStackable => ShowAmount`（getter 不经过基类，不吃该补丁）。同型堆叠路由见 `EnchantLimitEnchantCommandPatch`（主槽同型走原生堆叠、附加槽同型走 `StackAmount`），同型永不占新槽。
+- **菲涅耳透镜去重（堆叠放开的副作用修复）**：原版"掉落展示施加（`TryModifyCardRewardOptionsLate`/`ModifyMerchantCardCreationResults`）+ 入组施加（`TryModifyCardBeingAddedToDeck`）"两段式遗物，靠"同型非堆叠时 `CanEnchant` 拒绝"隐含去重；堆叠放开后会重复施加并叠层。`FresnelLensCompatPatch`（prefix）显式恢复：卡已有该附魔（任一槽位，`EnchantLimitService.HasSameTypeEnchantment`）时跳过入组钩子，未持有时走原生——展示与入组两个特性保留，最终只施加一次。同类原版遗物只此一个（蛋类遗物是升级非附魔，无此问题）。
 
 ### 上限提升的消费方
 
+- 查询 API：`EnchantLimitService.HasEnchantment<T>(card)`（主槽+附加槽同型检查，Cupid/HyperLink/SilverMetal 使用）、`GetEnchantmentCount` / `HasFreeSlot` / `GetExtraEnchantments`。
 - **遗物「神秘药剂」(MysteriousPotion)**：`AfterObtained` 调 `EnchantLimitService.AddBonus(Owner, 1)`（含 `Flash()` 反馈）。稀有度 `RelicRarity.Shop` + `SharedRelicPool`（原版 Brimstone 同款）——Shop 稀有度不在 `RelicFactory.RollRarity` 权重内，天然不进战斗抓袋，仅由商店售卖逻辑从共享池抽取；`MerchantCost` 默认 200 未覆写。上限提升随 `enchant_limit` RunSavedData 持久化，读档不丢失。
 
 ---

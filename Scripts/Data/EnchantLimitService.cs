@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib;
 using STS2RitsuLib.RunData;
 
@@ -66,6 +68,10 @@ public static class EnchantLimitService
         LimitChanged?.Invoke(player, newLimit);
     }
 
+    /// <summary>该卡是否带有指定类型附魔（主槽或附加槽）。</summary>
+    public static bool HasEnchantment<T>(CardModel card) where T : EnchantmentModel =>
+        card.Enchantment is T || ExtraEnchantmentStore.Get(card).OfType<T>().Any();
+
     /// <summary>一张卡当前的附魔总数（主槽 + 附加槽）。</summary>
     public static int GetEnchantmentCount(CardModel card) =>
         (card.Enchantment != null ? 1 : 0) + ExtraEnchantmentStore.Get(card).Count;
@@ -105,4 +111,61 @@ public static class EnchantLimitService
 
     private static bool HasSameType(CardModel card, Type type) =>
         card.Enchantment?.GetType() == type || ExtraEnchantmentStore.HasSameType(card, type);
+
+    /// <summary>一张卡上单个附魔槽位的快照（槽序保持：主槽在前）。</summary>
+    public readonly record struct EnchantmentSnapshot(ModelId Id, int Amount);
+
+    /// <summary>读取一张卡全部附魔的快照（不移除，槽序保持：主槽在前）。</summary>
+    public static IReadOnlyList<EnchantmentSnapshot> GetEnchantmentSnapshot(CardModel card)
+    {
+        List<EnchantmentSnapshot> snapshot = [];
+        if (card.Enchantment != null)
+            snapshot.Add(new(card.Enchantment.Id, card.Enchantment.Amount));
+        snapshot.AddRange(ExtraEnchantmentStore.Get(card).Select(e => new EnchantmentSnapshot(e.Id, e.Amount)));
+        return snapshot;
+    }
+
+    /// <summary>
+    /// 移除一张卡上的全部附魔（主槽+附加槽）并返回快照。
+    /// 仅解除附着，不回滚 OnEnchant 对卡牌的修改（关键词/费用残留，原版惯例）。
+    /// </summary>
+    public static IReadOnlyList<EnchantmentSnapshot> RemoveAllEnchantments(CardModel card)
+    {
+        IReadOnlyList<EnchantmentSnapshot> snapshot = GetEnchantmentSnapshot(card);
+        if (snapshot.Count == 0)
+            return snapshot;
+        ExtraEnchantmentStore.DetachAll(card); // 先摘附加槽，避免 ClearEnchantment 触发晋升
+        CardCmd.ClearEnchantment(card);
+        return snapshot;
+    }
+
+    /// <summary>
+    /// 把快照中的附魔按槽序逐个附着到目标卡：忽略占用地评估兼容性（EvaluateIgnoringOccupancy），
+    /// 兼容才施加，不兼容或槽位已满（且非同型堆叠）则丢弃。返回实际施加的附魔数。
+    /// </summary>
+    public static int ApplyEnchantmentSnapshot(CardModel card, IReadOnlyList<EnchantmentSnapshot> snapshot)
+    {
+        int applied = 0;
+        foreach ((ModelId id, int amount) in snapshot)
+        {
+            EnchantmentModel mutable = SaveUtil.EnchantmentOrDeprecated(id).ToMutable();
+            if (!HasFreeSlot(card) && !HasSameTypeEnchantment(card, mutable.GetType()))
+                continue; // 槽位已满且非同型堆叠 → 丢弃
+            if (!EvaluateIgnoringOccupancy(mutable, card))
+                continue;
+            CardCmd.Enchant(mutable, card, amount);
+            applied++;
+        }
+        return applied;
+    }
+
+    /// <summary>把一张卡上所有附魔（主槽+附加槽）的层数 ×2，并同步持久化与 UI。</summary>
+    public static void DoubleEnchantmentAmounts(CardModel card)
+    {
+        if (card.Enchantment != null)
+            card.Enchantment.Amount *= 2;
+        foreach (EnchantmentModel extra in ExtraEnchantmentStore.Get(card))
+            extra.Amount *= 2;
+        ExtraEnchantmentStore.SyncAndRefresh(card);
+    }
 }

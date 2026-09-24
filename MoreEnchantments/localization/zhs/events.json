@@ -1,2 +1,16 @@
 {
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.title": "古代科技",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.description": "你路过一个巨大的坑，里面躺着一块残破的银白色金属遗骸，看着像某种巨大机器的一部分残骸...",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.BUTTON.title": "一个绿色的按钮",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.BUTTON.description": "按下试试？",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.PULL_ROD.title": "一个红色的拉杆",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.PULL_ROD.description": "拉下试试？",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.ENLIGHTMENT.title": "这让你想起什么...",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.ENLIGHTMENT.description": "你感到携带的一件物品在蠢蠢欲动",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.BUTTON_END.description": "你感到一股精妙的力量涌入身体，\n\n你看向遗骸，它看起来失去了某种光泽",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.PULL_ROD_END.description": "你感到一股刚直的力量涌入身体，\n\n你看向遗骸，它看起来失去了某种光泽",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.ENLIGHTMENT_END.description": "这块石板，它亮了起来！\n\n它展现出了原本银白色的模样\n\n你的脑海中闪回了许多画面：卫星高悬在星球上空，神圣的白鹿飞驰而来...\n\n这是这个星球上发生的事情吗？\n\n你抬头看向遗骸，感觉你们之间出现了某种连结",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.selectPrompt.COPY_SOURCE": "选择一张已附魔的牌（复制它的附魔）",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.selectPrompt.COPY_TARGET": "选择一张没有附魔的牌（接收兼容的附魔）",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.selectPrompt.DOUBLE": "选择一张已附魔的牌，翻倍它的附魔层数"
 }

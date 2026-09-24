@@ -53,6 +53,7 @@ public class Entry
         limitPatcher.RegisterPatch<EnchantLimitCardPreviewPatch>();
         limitPatcher.RegisterPatch<EnchantLimitPreviewPatch>();
         limitPatcher.RegisterPatch<StackableEnchantmentPatch>();
+        limitPatcher.RegisterPatch<FresnelLensCompatPatch>();
         limitPatcher.RegisterPatch<MysteriousPotionPatch>();
         // 非关键补丁，失败仅降级（上限回到原版 1，其余功能不受影响）
         if (!limitPatcher.PatchAll())
@@ -63,6 +64,8 @@ public class Entry
         ancientPatcher.RegisterPatch<DarvRelicSetInjectionPatch>();
         ancientPatcher.RegisterPatch<NeowCurseOptionPatch>();
         ancientPatcher.RegisterPatch<OrobasPoolOneOptionPatch>();
+        ancientPatcher.RegisterPatch<NonupeipePoolOptionPatch>();
+        ancientPatcher.RegisterPatch<TanxPoolOptionPatch>();
         if (!ancientPatcher.PatchAll())
         {
             Logger.Error("Ancient relic pool patches failed; falling back to append-based ancient options.");
@@ -78,6 +81,12 @@ public class Entry
         // 非关键补丁，失败仅降级为「无专属栏位」
         if (!shopPatcher.PatchAll())
             Logger.Error("Shop patches failed; enchant relic shop slots are disabled.");
+
+        // 遗物配套补丁——非关键，失败仅降级对应遗物功能
+        var relicPatcher = RitsuLibFramework.CreatePatcher(ModId, "relics");
+        relicPatcher.RegisterPatch<SilverMetalLoadFixPatch>();
+        if (!relicPatcher.PatchAll())
+            Logger.Error("Relic patches failed; SilverMetal load fix is disabled.");
 
         Logger.Info("MoreEnchantments initialized!");
     }

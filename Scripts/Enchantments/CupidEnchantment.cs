@@ -42,7 +42,6 @@ public class CupidEnchantment : MoreEnchantmentsEnchantmentBase
     // 卡牌是否具有「丘比特」附魔（主槽或附加槽，见 EnchantLimitService 多附魔机制）
     private static bool HasCupid(CardModel card)
     {
-        return card.Enchantment is CupidEnchantment
-            || EnchantLimitService.GetExtraEnchantments(card).OfType<CupidEnchantment>().Any();
+        return EnchantLimitService.HasEnchantment<CupidEnchantment>(card);
     }
 }

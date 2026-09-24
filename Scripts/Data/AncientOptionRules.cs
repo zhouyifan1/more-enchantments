@@ -76,6 +76,13 @@ internal static class AncientOptionRules
         RitsuLibFramework.RegisterAncientOption<Neow>(Entry.ModId, ModAncientOptionRule.Single(
             ancient => Roll(ancient, 0.1f) ? CreateRelicOption<TouchOfMidas>(ancient) : null,
             null, 0, true));
+        // 诺奴佩普/坦克斯：单池 9 候选洗牌取 3，近似命中率 3/(9+1)
+        RitsuLibFramework.RegisterAncientOption<Nonupeipe>(Entry.ModId, ModAncientOptionRule.Single(
+            ancient => Roll(ancient, 0.3f) ? CreateRelicOption<LilacAndHawthorn>(ancient) : null,
+            null, 0, true));
+        RitsuLibFramework.RegisterAncientOption<Tanx>(Entry.ModId, ModAncientOptionRule.Single(
+            ancient => Roll(ancient, 0.3f) ? CreateRelicOption<SteelSwordAndSilverSword>(ancient) : null,
+            null, 0, true));
     }
 
     /// <summary>兜底：仅达弗（池注入运行期失败时由补丁调用；幂等）。</summary>

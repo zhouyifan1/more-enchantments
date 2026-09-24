@@ -11,6 +11,8 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Enchantments;
+using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Runs.History;
 using MoreEnchantments.Scripts.Data;
@@ -401,5 +403,37 @@ public class StackableEnchantmentPatch : IPatchMethod
         {
             Entry.Logger.Error($"[StackableEnchantmentPatch] {ex}");
         }
+    }
+}
+
+// 菲涅耳透镜(FresnelLens)兼容：原版的“最终只施加一次灵巧”依赖 CanEnchant 对同型非堆叠的拒绝来隐含去重——
+// 掉落生成时已对奖励卡施加过（展示用），入组钩子里 CanEnchant 为 false 自然跳过。
+// 堆叠放开（StackableEnchantmentPatch）后该隐含去重失效，入组时会再施加并叠层。
+// 这里显式恢复去重：卡已有灵巧（任一槽位）时跳原生入组钩子；未持有时走原生（保留“可附魔卡入组即附魔”特性）。
+public class FresnelLensCompatPatch : IPatchMethod
+{
+    public static string PatchId => "fresnel_lens_dedup";
+    public static string Description => "菲涅耳透镜：已有灵巧的卡牌加入牌组时不再重复施加";
+    public static bool IsCritical => false;
+
+    public static ModPatchTarget[] GetTargets() =>
+        [new(typeof(FresnelLens), nameof(FresnelLens.TryModifyCardBeingAddedToDeck))];
+
+    public static bool Prefix(CardModel card, out CardModel? newCard, ref bool __result)
+    {
+        newCard = null;
+        try
+        {
+            if (EnchantLimitService.HasSameTypeEnchantment(card, typeof(Nimble)))
+            {
+                __result = false;
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Entry.Logger.Error($"[FresnelLensCompatPatch] {ex}");
+        }
+        return true;
     }
 }

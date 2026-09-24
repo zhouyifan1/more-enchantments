@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.ValueProps;
+using MoreEnchantments.Scripts.Relics;
 using STS2RitsuLib.Interop.AutoRegistration;
 
 namespace MoreEnchantments.Scripts.Enchantments;
@@ -21,12 +22,16 @@ public class HeavyEnchantment : MoreEnchantmentsEnchantmentBase
     }
 
     // 当附魔被应用时调用：基础耗能 +1（X 耗能卡与特殊费用卡不受影响）。
+    // 持有者拥有遗物「银白金属」时改为耗能 -1。
     // 克隆卡牌时费用状态随克隆复制、降级/读档时游戏先重置再重放 OnEnchant，均不会重复叠加。
+    // 注意：读档重放时遗物尚未加载（Player.LoadInventory 先牌后遗物），此时一律按 +1 落账，
+    // 由 SilverMetalLoadFixPatch 在读档完成后统一翻转修正。
     protected override void OnEnchant()
     {
         if (!Card.EnergyCost.CostsX && Card.EnergyCost.Canonical >= 0)
         {
-            Card.EnergyCost.SetCustomBaseCost(Card.EnergyCost.GetWithModifiers(CostModifiers.None) + 1);
+            int costDelta = Card.Owner?.Relics.OfType<SilverMetal>().Any() == true ? -1 : 1;
+            Card.EnergyCost.SetCustomBaseCost(Card.EnergyCost.GetWithModifiers(CostModifiers.None) + costDelta);
         }
     }
 

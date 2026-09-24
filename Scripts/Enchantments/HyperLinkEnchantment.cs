@@ -63,7 +63,6 @@ public class HyperLinkEnchantment : MoreEnchantmentsEnchantmentBase
     // 卡牌是否具有「超链接」附魔（主槽或附加槽，见 EnchantLimitService 多附魔机制）
     private static bool HasHyperLink(CardModel card)
     {
-        return card.Enchantment is HyperLinkEnchantment
-            || EnchantLimitService.GetExtraEnchantments(card).OfType<HyperLinkEnchantment>().Any();
+        return EnchantLimitService.HasEnchantment<HyperLinkEnchantment>(card);
     }
 }

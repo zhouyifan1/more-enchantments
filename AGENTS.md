@@ -1,6 +1,6 @@
 # More Enchantments —— STS2 附魔扩展 Mod
 
-《杀戮尖塔 2》内容型 Mod，基于 RitsuLib 框架。项目规划见 `Plan/PROJECT_PLAN.md`。
+《杀戮尖塔 2》内容型 Mod，基于 RitsuLib 框架。设计文档在 `Plan/`：附魔 `Enchantments.md`，遗物按稀有度拆分为 `Relics/{Common,Uncommon,Rare,Ancient,Shop,Event}.md`（商店附魔遗物池见 `Relics/ShopEnchantRelics.md`），事件在 `Events/`。
 
 ## 开发约定
 

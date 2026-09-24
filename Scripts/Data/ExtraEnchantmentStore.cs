@@ -123,6 +123,23 @@ internal static class ExtraEnchantmentStore
             FireEnchantmentChanged(card);
     }
 
+    /// <summary>摘下全部附加槽（事件交换附魔用）：清空列表并同步持久化；实例随调用方快照丢弃，不调 ClearInternal。</summary>
+    public static void DetachAll(CardModel card)
+    {
+        if (_extras.TryGetValue(card, out List<EnchantmentModel>? list) && list.Count > 0)
+        {
+            list.Clear();
+            Sync(card);
+        }
+    }
+
+    /// <summary>附魔层数被外部直接修改后：同步附加槽持久化并刷新 UI（主槽层数由原版序列化负责）。</summary>
+    public static void SyncAndRefresh(CardModel card)
+    {
+        Sync(card);
+        FireEnchantmentChanged(card);
+    }
+
     /// <summary>临时置换主槽引用（配合 try/finally 使用），绕过私有 setter。</summary>
     public static void SwapPrimary(CardModel card, EnchantmentModel? value, out EnchantmentModel? previous)
     {

@@ -1,2 +1,16 @@
 {
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.title": "Ancient Technology",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.description": "You pass by an enormous crater. Lying inside is a battered piece of silver-white metal wreckage — it looks like part of some colossal machine...",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.BUTTON.title": "A Green Button",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.BUTTON.description": "Why not press it?",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.PULL_ROD.title": "A Red Lever",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.PULL_ROD.description": "Why not pull it?",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.ENLIGHTMENT.title": "This Reminds You of Something...",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.INITIAL.options.ENLIGHTMENT.description": "You feel an item you're carrying stirring restlessly.",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.BUTTON_END.description": "You feel an intricate power surge into your body.\n\nYou look at the wreckage — it seems to have lost some of its luster.",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.PULL_ROD_END.description": "You feel an unyielding power surge into your body.\n\nYou look at the wreckage — it seems to have lost some of its luster.",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.pages.ENLIGHTMENT_END.description": "The stone tablet — it lit up!\n\nIt reveals its original silver-white form.\n\nScenes flash through your mind: a satellite hanging high above the planet, a sacred white deer galloping toward you...\n\nDid these things happen on this planet?\n\nYou look up at the wreckage and feel a connection forming between you.",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.selectPrompt.COPY_SOURCE": "Choose an enchanted card (copy its enchantments)",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.selectPrompt.COPY_TARGET": "Choose a card with no enchantments (receives compatible enchantments)",
+    "MORE_ENCHANTMENTS_EVENT_ANCIENT_TECHNOLOGY_EVENT.selectPrompt.DOUBLE": "Choose an enchanted card to double its enchantment stacks"
 }
