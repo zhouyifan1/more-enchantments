@@ -1,3 +1,5 @@
+# 写在前面
+本mod由一个代码能力不成熟的学习者高强度VibeCoding开发，本质属于练习Vibe能力的个人娱乐项目，发布为公开项目主要是方便同为学习者的现实朋友们一起开发。所以只开放Issues，欢迎佬们提bug（如果真的有人能看到这个项目），暂不接受外部PR。
 # More Enchantments（更多附魔）
 
 《杀戮尖塔 2》（Slay the Spire 2）内容型 Mod，基于 [RitsuLib](https://github.com/BAKAOLC/STS2-RitsuLib) 框架开发。
@@ -13,7 +15,7 @@
 
 ## 安装（玩家）
 
-1. 先安装运行时依赖 [STS2-RitsuLib](https://github.com/BAKAOLC/STS2-RitsuLib)（从其 Releases 下载，放入游戏 `mods/` 目录）。
+1. 先安装运行时依赖 [STS2-RitsuLib](https://github.com/BAKAOLC/STS2-RitsuLib)（从其 Releases 下载，放入游戏 `mods/` 目录）。或者直接在创意工坊订阅RitsuLib。
 2. 从本仓库 [Releases](../../releases) 下载 `MoreEnchantments.dll`、`MoreEnchantments.pck`、`MoreEnchantments.json` 三个文件，放入 `Slay the Spire 2/mods/MoreEnchantments/`。
 3. 游戏内 Mod 管理界面启用。
 
