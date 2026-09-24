@@ -7,6 +7,9 @@
 # Godot 自动生成的 CSV 翻译缓存（如将来引入）
 *.translation
 
+# Godot 导出产物（PCK 随 GitHub Release 分发，不入库）
+*.pck
+
 # .NET 构建产物（正常经 Godot.NET.Sdk 输出到 .godot/mono/temp，
 # 但直接用 IDE/命令行构建 csproj 时可能在根目录生成）
 bin/
