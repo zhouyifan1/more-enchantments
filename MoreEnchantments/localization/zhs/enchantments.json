@@ -50,5 +50,10 @@
   "MORE_ENCHANTMENTS_ENCHANTMENT_TICK_TOCK_ENCHANTMENT.description": "这张牌被打出时，为遗物[gold]老旧的怀表[/gold]增加1点计数。",
   "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.title": "贪婪",
   "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.extraCardText": "斩杀时获得{Amount}金币。",
-  "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.description": "这张牌伤害+2，获得[gold]消耗[/gold]；用这张牌[gold]斩杀[/gold]敌人时，获得[blue]{Amount}[/blue]枚金币。"
+  "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.description": "这张牌伤害+2，获得[gold]消耗[/gold]；用这张牌[gold]斩杀[/gold]敌人时，获得[blue]{Amount}[/blue]枚金币。",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_FLY_BACK_ENCHANTMENT.title": "回旋",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_FLY_BACK_ENCHANTMENT.extraCardText": "打出后，在下个回合返回手牌。",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_FLY_BACK_ENCHANTMENT.description": "这张牌被打出后，会在你的下个回合抽牌前返回手牌。",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_SUBSTITUTE_ENCHANTMENT.title": "替死",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_SUBSTITUTE_ENCHANTMENT.description": "你死亡时，阻止本次死亡并恢复[blue]{HealPercent}%[/blue]最大生命值，随后随机移除一张附有[gold]替死[/gold]的卡牌。"
 }

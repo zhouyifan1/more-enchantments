@@ -10,7 +10,9 @@ using STS2RitsuLib.Patching.Models;
 namespace MoreEnchantments.Scripts.Patches;
 
 /// <summary>
-/// 「神秘药剂」翻倍补丁：CardCmd.Enchant 前缀把持有者的下一次附魔层数 ×2，随后遗物失效。
+/// 「神秘药剂」翻倍补丁：CardCmd.Enchant 前缀把持有者的下一次**战斗外**附魔层数 ×2，随后遗物失效。
+/// 战斗外判定：目标卡位于牌组（PileType.Deck）——战斗内的临时附魔（潘多拉继承、钢剑与银剑等）
+/// 目标是战斗克隆体，不会消耗翻倍。
 /// 用前缀修改 amount（而非事后改 Amount）：OnEnchant/ModifyCard/堆叠等全部按翻倍后的层数执行。
 /// ⚠️ 执行顺序是关键：附魔上限补丁 EnchantLimitEnchantCommandPatch 同为该方法前缀，且在附加槽路径上
 /// 会在前缀阶段就按当前 amount 完成 Attach——若它先执行，附加槽拿到的就是未翻倍的层数。
@@ -21,7 +23,7 @@ public class MysteriousPotionPatch : IPatchMethod
 {
     public static string PatchId => "mysterious_potion_enchant_doubling";
 
-    public static string Description => "神秘药剂：下一次附魔的层数翻倍（CardCmd.Enchant 前缀修改 amount）";
+    public static string Description => "神秘药剂：下一次战斗外附魔的层数翻倍（CardCmd.Enchant 前缀修改 amount）";
 
     public static bool IsCritical => false;
 
@@ -32,6 +34,11 @@ public class MysteriousPotionPatch : IPatchMethod
     [HarmonyPriority(Priority.First)]
     public static void Prefix(CardModel card, ref decimal amount)
     {
+        // 仅战斗外（牌组卡）的附魔参与翻倍；战斗克隆体的临时附魔不消耗
+        if (card.Pile?.Type != PileType.Deck)
+        {
+            return;
+        }
         MysteriousPotion? relic = card.Owner?.Relics.OfType<MysteriousPotion>()
             .FirstOrDefault(r => !r.HasDoublingBeenConsumed);
         if (relic == null)

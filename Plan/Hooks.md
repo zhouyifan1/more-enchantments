@@ -46,6 +46,10 @@
 | `AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource)` | AbstractModel | Poisoned/Cursed/Greedy | 任意模型造成伤害后（按 cardSource 过滤本牌；Greedy 用 result.WasTargetKilled 判斩杀） |
 | `EnchantDamageAdditive(decimal, ValueProp)` | EnchantmentModel | Greedy | 伤害加算修改（返回增量，默认 0） |
 | `ShouldTakeExtraTurn(Player)` / `AfterTakingExtraTurn(Player)` | RelicModel | OldPocketWatch | 额外回合判定/结算（参考遗物 PaelsEye） |
+| `ShouldDie(Creature)` / `ShouldDieLate(Creature)` / `AfterPreventingDeath(Creature)` | AbstractModel | Substitute | 死亡拦截与复活（原版两段式：先 ShouldDie 段〔瓶中精灵〕、后 ShouldDieLate 段〔蜥蜴尾巴〕） |
+| `BeforeHandDraw(player, choiceContext, combatState)` | AbstractModel | FlyBack | 回合抽牌前（卡牌上回合打出过则回手，参考卡牌 Bolas） |
+| `AfterPlayerTurnStart(choiceContext, player)` | AbstractModel | LilacAndHawthorn/SteelSwordAndSilverSword/FruitCake | 玩家回合抽牌结束后（CombatManager 回合流程：BeforeHandDraw → Draw → AfterPlayerTurnStart） |
+| `BeforeCardRemoved(card)` | AbstractModel | JadePendant | 牌组卡牌移除前（牌组侧广播，遗物刷新失效显示用） |
 | `ShowCounter` / `DisplayAmount` / `InvokeDisplayAmountChanged()` | RelicModel | OldPocketWatch | 遗物计数角标（参考遗物 HappyFlower） |
 | `IsUsedUp` | RelicModel | MysteriousPotion | 遗物失效置灰（参考遗物 MawBank，配 [SavedProperty] 标记） |
 | `ModifyCardPlayResultLocation(card, isAutoPlay, resources, location)` | AbstractModel | Stick | 改写卡牌打出后的去向 |
@@ -231,6 +235,12 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 5. 本地化 relics.json 照常；图标 85/256 占位。
 
 
+### 死亡拦截与复活机制（替死 Substitute）
+
+- 死亡判定在 `CreatureCmd`：`Hook.ShouldDie(runState, combatState, creature, out preventer)` **两段式**——先全监听器轮 `ShouldDie`（药水「瓶中精灵」在此段）、再全轮 `ShouldDieLate`（遗物「蜥蜴尾巴」）；首个返回 false 者成为 `preventer` 阻止死亡，随后 `Hook.AfterPreventingDeath` 对 preventer 回调（**前提：preventer ∈ 当次 `IterateHookListeners(combatState)` 结果**——战斗克隆体上的附魔满足，附加槽由本 Mod 广播补丁纳入）。
+- ⚠️ **监听器顺序**（`CombatState.IterateHookListeners`）：力量 → 遗物 → 药水 → 充能球 → 各牌堆卡牌（卡→苦难→附魔）。**药水先于卡牌附魔**——直接把 `ShouldDie` 写在附魔上会被瓶中精灵抢先消耗。要让附魔级替死先于药水，用 `SubstituteDeathPreventionPatch`（`Hook.ShouldDie` 前缀：自行扫描、以附魔实例为 preventer、`__result=false` 跳原版）。
+- 移除卡牌：`CardPileCmd.RemoveFromCombat(clone)`（战斗内）+ `CardPileCmd.RemoveFromDeck(deckCard)`（牌组永久移除，含预览与历史）；战斗克隆体与牌组原件通过 `clone.DeckVersion == deckCard` 关联。
+
 ### 「打出前附着附魔」模式（钢剑与银剑）
 
 - 挂点 `BeforeCardPlayed(CardPlay)`（无 choiceContext，参考遗物 PaelsEye）：附魔在卡牌结算前附着，**本次打出即生效**（锋利加伤进当次伤害计算、弱化经 OnPlay 分发进当次目标——多槽 OnPlay 分发补丁覆盖附加槽）。
@@ -252,9 +262,10 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - **扣最大生命**（LeafyPoultice 模式）：`CreatureCmd.LoseMaxHp(new ThrowingPlayerChoiceContext(), Owner.Creature, amount, isFromCard: false)`。
 - **选牌附加过滤**：`CardSelectCmd.FromDeckForEnchantment(player, enchantment, amount, additionalFilter, prefs)` 重载可在附魔 CanEnchant 之外叠加遗物侧条件（机器残片的费用≤2）。
 
-### 神秘药剂的「下一次附魔层数翻倍」
+### 神秘药剂的「下一次战斗外附魔层数翻倍」
 
 `MysteriousPotionPatch`：`CardCmd.Enchant(EnchantmentModel, CardModel, decimal)` 前缀 `ref amount ×2`（与 EnchantLimitEnchantCommandPatch 同为前缀；OnEnchant/堆叠均按翻倍后执行）。生效后调遗物 `ConsumeDoubling()` 失效。
+- **仅战斗外附魔参与**：前缀先判 `card.Pile?.Type == PileType.Deck`——战斗内的临时附魔（潘多拉继承、钢剑与银剑等）目标是战斗克隆体，直接跳过不消耗翻倍。
 - ⚠️ **前缀执行顺序是关键**：EnchantLimitEnchantCommandPatch 在附加槽路径上**前缀阶段就按当前 amount 完成 Attach**——若它先执行，附加槽拿到的是未翻倍层数。故本补丁 Prefix 标 `[HarmonyPriority(Priority.First)]`（Harmony 2 优先级数值越小越先执行，默认 Normal=400），必须先于一切消费 amount 的前缀。
 - 已知取舍：附魔抛异常时翻倍仍被消耗（正常途径不会触发）。
 
@@ -314,6 +325,10 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 | `PlayerCmd.GainGold(int, Player)` | 获得金币（参考卡牌 HandOfGreed） | Greedy |
 | `CreatureCmd.LoseMaxHp(choiceContext, creature, amount, isFromCard: false)` | 失去最大生命值（参考遗物 LeafyPoultice/SereTalon） | TouchOfMidas |
 | `DamageResult.WasTargetKilled` | 该段伤害是否造成斩杀 | Greedy |
+| `CardPileCmd.RemoveFromCombat(card)` / `RemoveFromDeck(card)` | 战斗内移除 / 牌组永久移除卡牌 | Substitute |
+| `CombatManager.Instance.History.CardPlaysFinished` + `HappenedLastPlayerTurn(owner)` | "上回合打出过本卡"判定（参考卡牌 Bolas） | FlyBack |
+| `RandomEnchantService.RollAndEnchant(card, amount, rng)` | 按权重表随机附魔（默认全附魔均匀，空候选返回 null） | FruitCake |
+| `EnchantLimitService.GetAllEnchantments(card)` | 主槽+附加槽全部附魔枚举 | SubstituteDeathPreventionPatch |
 
 ---
 

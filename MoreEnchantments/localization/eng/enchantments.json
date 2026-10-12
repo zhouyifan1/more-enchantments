@@ -50,5 +50,10 @@
   "MORE_ENCHANTMENTS_ENCHANTMENT_TICK_TOCK_ENCHANTMENT.description": "When this card is played, add 1 count to [gold]Old Pocket Watch[/gold].",
   "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.title": "Greedy",
   "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.extraCardText": "+2 damage. Exhaust. On kill, gain {Amount} Gold.",
-  "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.description": "This card deals +2 damage and gains [gold]Exhaust[/gold]. Whenever it [gold]kills[/gold] an enemy, gain [blue]{Amount}[/blue] Gold."
+  "MORE_ENCHANTMENTS_ENCHANTMENT_GREEDY_ENCHANTMENT.description": "This card deals +2 damage and gains [gold]Exhaust[/gold]. Whenever it [gold]kills[/gold] an enemy, gain [blue]{Amount}[/blue] Gold.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_FLY_BACK_ENCHANTMENT.title": "Fly Back",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_FLY_BACK_ENCHANTMENT.extraCardText": "After being played, returns to your hand next turn.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_FLY_BACK_ENCHANTMENT.description": "After this card is played, it returns to your hand before you draw next turn.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_SUBSTITUTE_ENCHANTMENT.title": "Substitute",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_SUBSTITUTE_ENCHANTMENT.description": "When you die, prevent it and heal [blue]{HealPercent}%[/blue] of your Max HP, then remove a random card with [gold]Substitute[/gold] from your deck."
 }

@@ -72,6 +72,15 @@ public static class EnchantLimitService
     public static bool HasEnchantment<T>(CardModel card) where T : EnchantmentModel =>
         card.Enchantment is T || ExtraEnchantmentStore.Get(card).OfType<T>().Any();
 
+    /// <summary>该卡全部附魔（主槽在前，附加槽按槽序）。</summary>
+    public static IEnumerable<EnchantmentModel> GetAllEnchantments(CardModel card)
+    {
+        if (card.Enchantment != null)
+            yield return card.Enchantment;
+        foreach (EnchantmentModel extra in ExtraEnchantmentStore.Get(card))
+            yield return extra;
+    }
+
     /// <summary>一张卡当前的附魔总数（主槽 + 附加槽）。</summary>
     public static int GetEnchantmentCount(CardModel card) =>
         (card.Enchantment != null ? 1 : 0) + ExtraEnchantmentStore.Get(card).Count;

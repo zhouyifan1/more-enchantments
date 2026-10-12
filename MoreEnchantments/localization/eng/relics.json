@@ -90,7 +90,7 @@
   "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Glam[/gold] {EnchantAmount}.",
   "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.flavor": "The identity of its former owner is self-evident.",
   "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.title": "Mysterious Potion",
-  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.description": "On pickup, increase your enchantment limit by 1, and double the amount of your next enchantment. This relic is used up after the doubling takes effect.",
+  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.description": "On pickup, increase your enchantment limit by 1, and double the amount of your next out-of-combat enchantment. This relic is used up after the doubling takes effect.",
   "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.flavor": "The ingredient list reads: Trenbolone, Trenbolone Acetate, Methenolone...",
   "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.title": "Pandora's Hairband",
   "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Pandora[/gold] {EnchantAmount}.",
@@ -115,5 +115,14 @@
   "MORE_ENCHANTMENTS_RELIC_LILAC_AND_HAWTHORN.flavor": "The funeral flowers smell lovely.",
   "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.title": "Steel Sword and Silver Sword",
   "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.description": "Whenever you play an Attack, add 1 count, resetting at the start of your turn. Each turn, your odd-numbered Attacks are enchanted with [gold]Sharp[/gold] {SharpAmount} before being played, even-numbered ones with [gold]Weakening[/gold] {WeakeningAmount}.",
-  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.flavor": "Steel for the wicked, silver for the monsters."
+  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.flavor": "Steel for the wicked, silver for the monsters.",
+  "MORE_ENCHANTMENTS_RELIC_BOOMERANG.title": "Boomerang",
+  "MORE_ENCHANTMENTS_RELIC_BOOMERANG.description": "On pickup, choose up to {Cards} Attack cards from your deck and enchant them with [gold]Fly Back[/gold] {EnchantAmount}.",
+  "MORE_ENCHANTMENTS_RELIC_BOOMERANG.flavor": "It flies toward those who don't watch their words.",
+  "MORE_ENCHANTMENTS_RELIC_FRUIT_CAKE.title": "Fruit Cake",
+  "MORE_ENCHANTMENTS_RELIC_FRUIT_CAKE.description": "After you finish drawing each turn, apply 1 stack of a random enchantment to a random card in your hand.",
+  "MORE_ENCHANTMENTS_RELIC_FRUIT_CAKE.flavor": "*Rainbow effect!*",
+  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.title": "Jade Pendant",
+  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Substitute[/gold] {EnchantAmount}. Disabled while no card in your deck has Substitute.",
+  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.flavor": "Square and angular, like a little square person. Not of this world."
 }

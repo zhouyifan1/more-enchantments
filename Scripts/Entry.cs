@@ -88,6 +88,12 @@ public class Entry
         if (!relicPatcher.PatchAll())
             Logger.Error("Relic patches failed; SilverMetal load fix is disabled.");
 
+        // 附魔配套补丁——非关键，失败仅降级对应附魔功能
+        var enchantmentPatcher = RitsuLibFramework.CreatePatcher(ModId, "enchantments");
+        enchantmentPatcher.RegisterPatch<SubstituteDeathPreventionPatch>();
+        if (!enchantmentPatcher.PatchAll())
+            Logger.Error("Enchantment patches failed; Substitute death prevention is disabled.");
+
         Logger.Info("MoreEnchantments initialized!");
     }
 

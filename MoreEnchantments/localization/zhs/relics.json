@@ -90,7 +90,7 @@
   "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]华彩[/gold]{EnchantAmount}层。",
   "MORE_ENCHANTMENTS_RELIC_BEAUTIFUL_RING.flavor": "原主人的身份不言自明。",
   "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.title": "神秘药剂",
-  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.description": "拾起时，你的卡牌附魔上限提高1，且你下一次为卡牌附魔时层数翻倍。翻倍生效后此遗物失效。",
+  "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.description": "拾起时，你的卡牌附魔上限提高1，且你下一次在战斗外为卡牌附魔时层数翻倍。翻倍生效后此遗物失效。",
   "MORE_ENCHANTMENTS_RELIC_MYSTERIOUS_POTION.flavor": "上面印着配料表：群勃龙、醋酸群勃龙、美替诺龙……",
   "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.title": "潘多拉的发带",
   "MORE_ENCHANTMENTS_RELIC_PANDORAS_HAIRBAND.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]潘多拉[/gold]{EnchantAmount}层。",
@@ -115,5 +115,14 @@
   "MORE_ENCHANTMENTS_RELIC_LILAC_AND_HAWTHORN.flavor": "葬礼上的花朵很香。",
   "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.title": "钢剑与银剑",
   "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.description": "打出攻击牌时计数+1，计数在你的回合开始时清零。每回合你第奇数次打出的攻击牌在打出前附魔[gold]锋利[/gold]{SharpAmount}层，第偶数次打出的攻击牌在打出前附魔[gold]弱化[/gold]{WeakeningAmount}层。",
-  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.flavor": "钢剑惩奸恶，银剑斩妖魔。"
+  "MORE_ENCHANTMENTS_RELIC_STEEL_SWORD_AND_SILVER_SWORD.flavor": "钢剑惩奸恶，银剑斩妖魔。",
+  "MORE_ENCHANTMENTS_RELIC_BOOMERANG.title": "回旋镖",
+  "MORE_ENCHANTMENTS_RELIC_BOOMERANG.description": "拾起时，从你的牌组中选择至多{Cards}张攻击牌，为其附加[gold]回旋[/gold]{EnchantAmount}层。",
+  "MORE_ENCHANTMENTS_RELIC_BOOMERANG.flavor": "会飞到那些不谨言慎行的人的头上。",
+  "MORE_ENCHANTMENTS_RELIC_FRUIT_CAKE.title": "水果蛋糕",
+  "MORE_ENCHANTMENTS_RELIC_FRUIT_CAKE.description": "每回合抽牌结束后，为你的随机一张手牌施加随机附魔1层。",
+  "MORE_ENCHANTMENTS_RELIC_FRUIT_CAKE.flavor": "*彩虹效果！*",
+  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.title": "玉佩",
+  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]替死[/gold]{EnchantAmount}层。牌组中没有「替死」牌时失效。",
+  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.flavor": "长得方方正正的，看着像一个方形的人，不像是这个世界的产物。"
 }
