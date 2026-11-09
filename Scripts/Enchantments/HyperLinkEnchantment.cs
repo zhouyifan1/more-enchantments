@@ -8,7 +8,7 @@ using STS2RitsuLib.Interop.AutoRegistration;
 namespace MoreEnchantments.Scripts.Enchantments;
 
 /// <summary>
-/// 附魔「超链接」：当你打出有「超链接」的卡牌时，自动打出牌堆各处（手牌/抽牌堆/弃牌堆）所有带「超链接」的卡牌。
+/// 附魔「超链接」：当你打出有「超链接」的卡牌时，自动打出牌堆各处（手牌/抽牌堆/弃牌堆/消耗堆）所有带「超链接」的卡牌。
 /// 自动打出用 CardCmd.AutoPlay（单体目标卡自动随机选敌，参考 HellraiserPower/StampedePower 的 null target 用法）。
 /// 静态重入守卫：被连锁打出的「超链接」牌不再触发拉取，避免无限循环。
 /// 控制台测试：enchant MORE_ENCHANTMENTS_ENCHANTMENT_HYPER_LINK_ENCHANTMENT [层数] [手牌位置]
@@ -40,7 +40,7 @@ public class HyperLinkEnchantment : MoreEnchantmentsEnchantmentBase
         }
         List<CardModel> links = Card.Owner.PlayerCombatState.AllCards
             .Where((CardModel c) => c != Card && HasHyperLink(c) && c.Pile != null &&
-                (c.Pile.Type == PileType.Hand || c.Pile.Type == PileType.Draw || c.Pile.Type == PileType.Discard))
+                (c.Pile.Type == PileType.Hand || c.Pile.Type == PileType.Draw || c.Pile.Type == PileType.Discard || c.Pile.Type == PileType.Exhaust))
             .ToList();
         if (links.Count == 0)
         {

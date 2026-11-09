@@ -105,7 +105,7 @@
   "MORE_ENCHANTMENTS_RELIC_OLD_POCKET_WATCH.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Tick Tock[/gold] {EnchantAmount}. Each time those cards are played, add 1 count; at {Threshold} counts, you take an extra turn.",
   "MORE_ENCHANTMENTS_RELIC_OLD_POCKET_WATCH.flavor": "A thousand years on, its hands still stubbornly march forward.",
   "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.title": "Touch of Midas",
-  "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.description": "On pickup, lose {MaxHp} Max HP, choose up to {Cards} Attack cards from your deck and enchant them with [gold]Greedy[/gold] {EnchantAmount}.",
+  "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.description": "On pickup, lose {MaxHp} Max HP, choose up to {Cards} Attack cards from your deck and enchant them with [gold]Golden Touch[/gold] {EnchantAmount}.",
   "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.flavor": "The magic of the golden touch.",
   "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.title": "Silver Metal",
   "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.description": "[gold]Heavy[/gold] enchantments reduce this card's Energy cost by 1 instead of increasing it.",

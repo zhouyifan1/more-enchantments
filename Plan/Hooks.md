@@ -43,7 +43,7 @@
 | `AfterCardPlayed(choiceContext, cardPlay)` | AbstractModel | Stick/HyperLink/TickTock/LilacAndHawthorn | 任意卡牌打出后（计数/连锁触发/每回合首次检测） |
 | `BeforeCardPlayed(cardPlay)` | AbstractModel | SteelSwordAndSilverSword | 任意卡牌打出前（无 choiceContext；打出前附魔本次结算即生效，参考遗物 PaelsEye） |
 | `AfterPlayerTurnStart(choiceContext, player)` | AbstractModel | LilacAndHawthorn/SteelSwordAndSilverSword | 玩家回合开始（遗物侧"每回合"标记/计数复位点，需过滤 player == Owner） |
-| `AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource)` | AbstractModel | Poisoned/Cursed/Greedy | 任意模型造成伤害后（按 cardSource 过滤本牌；Greedy 用 result.WasTargetKilled 判斩杀） |
+| `AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource)` | AbstractModel | Poisoned/Cursed/Greedy | 任意模型造成伤害后（按 cardSource 过滤本牌；点金用 result.UnblockedDamage 获得等量金币） |
 | `EnchantDamageAdditive(decimal, ValueProp)` | EnchantmentModel | Greedy | 伤害加算修改（返回增量，默认 0） |
 | `ShouldTakeExtraTurn(Player)` / `AfterTakingExtraTurn(Player)` | RelicModel | OldPocketWatch | 额外回合判定/结算（参考遗物 PaelsEye） |
 | `ShouldDie(Creature)` / `ShouldDieLate(Creature)` / `AfterPreventingDeath(Creature)` | AbstractModel | Substitute | 死亡拦截与复活（原版两段式：先 ShouldDie 段〔瓶中精灵〕、后 ShouldDieLate 段〔蜥蜴尾巴〕） |
@@ -85,7 +85,7 @@
 ### `EnchantDamageMultiplicative(decimal originalDamage, ValueProp props)`
 伤害乘算因子，默认 `1m`。
 - Heavy：`props.IsPoweredAttack() ? 2m : 1m`（与原版 Instinct 一致；`IsPoweredAttack` 排除非攻击/无力量加成的伤害）。
-- 同族钩子：`EnchantDamageAdditive` / `EnchantBlockAdditive` / `EnchantBlockMultiplicative`（加性钩子返回**增量**，默认 0；Greedy 用 `props.IsPoweredAttack() ? 2m : 0m` 做固定 +2）。
+- 同族钩子：`EnchantDamageAdditive` / `EnchantBlockAdditive` / `EnchantBlockMultiplicative`（加性钩子返回**增量**，默认 0；点金 Greedy 用 `props.IsPoweredAttack() ? 3m : 0m` 做固定 +3）。
 
 ### `EnchantPlayCount(int originalPlayCount)`
 修改打出次数，实现"重放"。卡牌最终打出次数 = `Enchantment.EnchantPlayCount(BaseReplayCount)`。
@@ -322,9 +322,9 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 | `CardPileCmd.Add(IEnumerable<CardModel>, PileType.Hand)` | 把任意牌堆的卡牌移入手牌（不算抽牌） | Cupid |
 | `PlayerCombatState.AllCards` | 本场战斗玩家全部卡牌（跨牌堆，参考 SummonForth） | Cupid/HyperLink |
 | `CardCmd.AutoPlay(choiceContext, card, null)` | 自动打出任意牌堆中的卡牌（单体目标自动随机选敌；参考 HellraiserPower/StampedePower） | HyperLink |
-| `PlayerCmd.GainGold(int, Player)` | 获得金币（参考卡牌 HandOfGreed） | Greedy |
+| `PlayerCmd.GainGold(decimal, Player)` | 获得金币 | Greedy（点金，按未被格挡伤害等量获得） |
 | `CreatureCmd.LoseMaxHp(choiceContext, creature, amount, isFromCard: false)` | 失去最大生命值（参考遗物 LeafyPoultice/SereTalon） | TouchOfMidas |
-| `DamageResult.WasTargetKilled` | 该段伤害是否造成斩杀 | Greedy |
+| `DamageResult.UnblockedDamage` | 该段未被格挡的伤害 | Greedy |
 | `CardPileCmd.RemoveFromCombat(card)` / `RemoveFromDeck(card)` | 战斗内移除 / 牌组永久移除卡牌 | Substitute |
 | `CombatManager.Instance.History.CardPlaysFinished` + `HappenedLastPlayerTurn(owner)` | "上回合打出过本卡"判定（参考卡牌 Bolas） | FlyBack |
 | `RandomEnchantService.RollAndEnchant(card, amount, rng)` | 按权重表随机附魔（默认全附魔均匀，空候选返回 null） | FruitCake |

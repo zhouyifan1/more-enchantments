@@ -105,7 +105,7 @@
   "MORE_ENCHANTMENTS_RELIC_OLD_POCKET_WATCH.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]滴答[/gold]{EnchantAmount}层。这些牌每被打出一次，计数+1；计数达到{Threshold}时，你获得1个额外回合。",
   "MORE_ENCHANTMENTS_RELIC_OLD_POCKET_WATCH.flavor": "跨越千年的时光，指针仍在倔强地向前走动。",
   "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.title": "弥达斯之触",
-  "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.description": "拾起时，失去{MaxHp}点最大生命值，从你的牌组中选择至多{Cards}张攻击牌，为其附加[gold]贪婪[/gold]{EnchantAmount}层。",
+  "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.description": "拾起时，失去{MaxHp}点最大生命值，从你的牌组中选择至多{Cards}张攻击牌，为其附加[gold]点金[/gold]{EnchantAmount}层。",
   "MORE_ENCHANTMENTS_RELIC_TOUCH_OF_MIDAS.flavor": "点石成金的魔力。",
   "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.title": "银白金属",
   "MORE_ENCHANTMENTS_RELIC_SILVER_METAL.description": "附魔[gold]沉重[/gold]增加耗能的效果改为减少1点耗能。",
