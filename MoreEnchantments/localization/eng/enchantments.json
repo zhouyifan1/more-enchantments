@@ -55,5 +55,12 @@
   "MORE_ENCHANTMENTS_ENCHANTMENT_FLY_BACK_ENCHANTMENT.extraCardText": "After being played, returns to your hand next turn.",
   "MORE_ENCHANTMENTS_ENCHANTMENT_FLY_BACK_ENCHANTMENT.description": "After this card is played, it returns to your hand before you draw next turn.",
   "MORE_ENCHANTMENTS_ENCHANTMENT_SUBSTITUTE_ENCHANTMENT.title": "Substitute",
-  "MORE_ENCHANTMENTS_ENCHANTMENT_SUBSTITUTE_ENCHANTMENT.description": "When you die, prevent it and heal [blue]{HealPercent}%[/blue] of your Max HP, then remove a random card with [gold]Substitute[/gold] from your deck."
+  "MORE_ENCHANTMENTS_ENCHANTMENT_SUBSTITUTE_ENCHANTMENT.description": "When you die, prevent it and heal [blue]{HealPercent}%[/blue] of your Max HP, then remove a random card with [gold]Substitute[/gold] from your deck.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_BOTTLED_ENCHANTMENT.title": "Bottled",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_BOTTLED_ENCHANTMENT.description": "This card gains [gold]Innate[/gold].",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CATALYZE_ENCHANTMENT.title": "Catalyze",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CATALYZE_ENCHANTMENT.extraCardText": "Double a random debuff on the target. Attacks that hit all enemies affect each enemy separately.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_CATALYZE_ENCHANTMENT.description": "When this card is played, double a random [gold]debuff[/gold] on the target enemy. Attacks that hit all enemies affect each enemy separately.",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_SET_UP_ENCHANTMENT.title": "SetUp",
+  "MORE_ENCHANTMENTS_ENCHANTMENT_SET_UP_ENCHANTMENT.description": "At the start of combat, place this card at the bottom of your draw pile. The first time you play it each combat, it costs [blue]0[/blue]."
 }

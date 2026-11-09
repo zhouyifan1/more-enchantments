@@ -29,15 +29,16 @@
 
 | Hook | 定义于 | 使用位置 | 用途 |
 | --- | --- | --- | --- |
-| `CanEnchantCardType(CardType)` | EnchantmentModel | Heavy/Stick/BurntOut/Weakening/Serrated/Poisoned/Cursed | 按卡牌类型限制附着 |
-| `CanEnchant(CardModel)` | EnchantmentModel | Resilience/BurntOut | 按卡牌属性限制附着 |
-| `OnEnchant()` | EnchantmentModel | Resilience/Heavy/BurntOut | 附魔应用时修改卡牌（关键词/费用） |
-| `OnPlay(choiceContext, cardPlay)` | EnchantmentModel | Tactics/Reaction/Weakening/Serrated/Sacrifice/Electric/Forge | 卡牌打出时触发 |
+| `CanEnchantCardType(CardType)` | EnchantmentModel | Heavy/Stick/BurntOut/Weakening/Serrated/Poisoned/Cursed/Catalyze | 按卡牌类型限制附着 |
+| `CanEnchant(CardModel)` | EnchantmentModel | Resilience/BurntOut/SetUp | 按卡牌属性限制附着 |
+| `OnEnchant()` | EnchantmentModel | Resilience/Heavy/BurntOut/Bottled/SetUp | 附魔应用时修改卡牌（关键词/费用） |
+| `OnPlay(choiceContext, cardPlay)` | EnchantmentModel | Tactics/Reaction/Weakening/Serrated/Sacrifice/Electric/Forge/Catalyze | 卡牌打出时触发 |
+| `ShouldStartAtBottomOfDrawPile` | EnchantmentModel | SetUp | 战斗首回合抽牌前将卡牌移至抽牌堆底部 |
 | `EnchantDamageMultiplicative(decimal, ValueProp)` | EnchantmentModel | Heavy | 伤害乘算修改 |
 | `EnchantPlayCount(int)` | EnchantmentModel | BurntOut | 修改打出次数（重放） |
 | `ShowAmount` / `HasExtraCardText` | EnchantmentModel | 全部 | 数值角标 / 追加卡牌文本开关 |
 | `DisplayAmount` | EnchantmentModel | Stick | 角标显示值覆写（实时倒数剩余次数） |
-| `ExtraHoverTips` | EnchantmentModel | Resilience/BurntOut/Weakening/Serrated/Tactics/Reaction/Poisoned/Sacrifice/Cursed/Electric/Forge | 额外悬停提示 |
+| `ExtraHoverTips` | EnchantmentModel | Resilience/BurntOut/Weakening/Serrated/Tactics/Reaction/Poisoned/Sacrifice/Cursed/Electric/Forge/Bottled | 额外悬停提示 |
 | `AfterFlush(choiceContext, player, flushed, retained)` | AbstractModel | Resilience | 回合结束弃牌/保留结算后 |
 | `AfterCardDrawn(choiceContext, card, fromHandDraw)` | AbstractModel | Pandora/Cupid | 任意卡牌被抽到时（过滤 card == Card 即"抽到本卡"，参考卡牌 KinglyPunch） |
 | `AfterCardPlayed(choiceContext, cardPlay)` | AbstractModel | Stick/HyperLink/TickTock/LilacAndHawthorn | 任意卡牌打出后（计数/连锁触发/每回合首次检测） |
@@ -69,18 +70,23 @@
 
 ### `CanEnchant(CardModel card)`
 按卡牌属性细筛，**务必带上 `base.CanEnchant(card)`**（基类已处理：不可叠加附魔冲突、卡组中不可打出卡等）。
-- 本项目用法：`card.GainsBlock && card.DynamicVars.ContainsKey("Block")`（Resilience，防无 Block 变量的卡崩溃）；`!card.Keywords.Contains(CardKeyword.Exhaust)`（BurntOut，已有消耗的卡排除）。
+- 本项目用法：`card.GainsBlock && card.DynamicVars.ContainsKey("Block")`（Resilience，防无 Block 变量的卡崩溃）；`!card.Keywords.Contains(CardKeyword.Exhaust)`（BurntOut，已有消耗的卡排除）；SetUp 排除 X 能量、X 星辰与特殊负能量费用卡。`CanonicalStarCost = -1` 仅表示没有星辰费用，不得据此排除普通卡。
 
 ### `OnEnchant()`
 附魔应用时调用一次，用于给卡牌做持久修改（本场克隆生命周期内）。
-- 加关键词：`Card.AddKeyword(CardKeyword.Retain)`（原版 Steady 同款）、`Card.AddKeyword(CardKeyword.Exhaust)`；
+- 加关键词：`Card.AddKeyword(CardKeyword.Retain)`（原版 Steady 同款）、`Card.AddKeyword(CardKeyword.Exhaust)`；Bottled 添加 `CardKeyword.Innate`（参考 RoyallyApproved）。
 - 改费用：`Card.EnergyCost.SetCustomBaseCost(Card.EnergyCost.GetWithModifiers(CostModifiers.None) + 1)`（Heavy）。X 耗能/特殊费用卡需先判 `!CostsX && Canonical >= 0`。
+- 首次免费：SetUp 使用 `Card.EnergyCost.SetUntilPlayed(0)` 与 `Card.SetStarCostUntilPlayed(0)`；修饰随战斗克隆复制，在首次打出后由原生清理，无需自管计数。
 - 时机细节见 §0.4；附魔被移除时**不会**自动回滚这些修改（原版惯例如此，规划中的"驱散"功能需注意）。
 
 ### `OnPlay(PlayerChoiceContext choiceContext, CardPlay? cardPlay)`
 附魔卡牌被打出时调用（重放序列中每次打出都会触发）。`cardPlay` 可空。
 - `cardPlay.Target`：单体目标（`Creature?`）；群体攻击卡为 `null`，全体敌人用 `Card.CombatState.HittableEnemies`（参考卡牌 SweepingBeam）。
 - 施加能力：`await PowerCmd.Apply<WeakPower>(choiceContext, target, Amount, Card.Owner.Creature, Card)`（参考卡牌 Comet/BeamCell；另有 `IEnumerable<Creature>` 重载用于群体）。
+- Catalyze 在卡牌效果后从目标现有减益中随机选取一种并严格翻倍；群体攻击逐敌人分别随机。候选排除 `ITemporaryPower`，使用 `SetAmount(Amount * 2)` 而非 `ModifyAmount`，避免被神器等施加修正拦截。
+
+### `ShouldStartAtBottomOfDrawPile`
+- SetUp 返回 `true`。原版 `CombatManager.SetupPlayerTurn` 只读取主槽；`EnchantLimitBottomOfDrawPilePatch`（M12，async transpiler）把读取扩展为主槽或任一附加槽请求沉底即生效。
 
 ### `EnchantDamageMultiplicative(decimal originalDamage, ValueProp props)`
 伤害乘算因子，默认 `1m`。
@@ -269,7 +275,7 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - ⚠️ **前缀执行顺序是关键**：EnchantLimitEnchantCommandPatch 在附加槽路径上**前缀阶段就按当前 amount 完成 Attach**——若它先执行，附加槽拿到的是未翻倍层数。故本补丁 Prefix 标 `[HarmonyPriority(Priority.First)]`（Harmony 2 优先级数值越小越先执行，默认 Normal=400），必须先于一切消费 amount 的前缀。
 - 已知取舍：附魔抛异常时翻倍仍被消耗（正常途径不会触发）。
 
-### 商店附魔遗物池（19 个遗物，见 Plan/Relics/ShopEnchantRelics.md）
+### 商店附魔遗物池（21 个遗物，见 Plan/Relics/ShopEnchantRelics.md）
 
 - **中间基类 `ShopEnchantRelicBase<TEnchantment>`**（`Scripts/Relics/`）：在 `EnchantOnPickupRelicBase` 上统一覆写 `MerchantCost`——普通/罕见/稀有 → 75/125/175（低于原版 175/225/275）。个别遗物再覆写（如 LionSculpture 定价 225）。
 - **随机升级模式**（SmallWhetstone/HalfBowlWarPaint，参考原版 Whetstone/WarPaint，不走附魔基类）：
@@ -308,14 +314,16 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 | API | 用途 | 使用位置 |
 | --- | --- | --- |
 | `PowerCmd.Apply<TPower>(choiceContext, target/IEnumerable<Creature>, amount, applier, cardSource)` | 施加能力层数 | Weakening/Serrated/Tactics/Reaction/Poisoned/Sacrifice/Cursed |
+| `PowerModel.TypeForCurrentAmount` / `SetAmount(int)` | 识别当前减益并直接设置层数，自动刷新显示 | Catalyze |
 | `CreatureCmd.Damage(choiceContext, target, amount, ValueProp.Unblockable \| Unpowered \| Move, cardSource, cardPlay)` | "失去生命"的标准实现（绕过格挡与力量，参考卡牌 Bloodletting） | Sacrifice |
 | `OrbCmd.Channel<TOrb>(choiceContext, player)` | 生成充能球（参考卡牌 Zap） | Electric |
 | `ForgeCmd.Forge(amount, player, source)` | 铸造（参考卡牌 TheSmith） | Forge |
 | `Card.EnergyCost.SetCustomBaseCost(int)` / `GetWithModifiers(CostModifiers.None)` | 读/改卡牌基础费用 | Heavy |
+| `Card.EnergyCost.SetUntilPlayed(0)` / `Card.SetStarCostUntilPlayed(0)` | 设置打出后自动清除的首次免费修饰 | SetUp |
 | `Card.DynamicVars.TryGetValue("Block", out var)` / `ContainsKey` | 安全访问动态变量（`DynamicVarSet` 实现 `IReadOnlyDictionary`） | Resilience |
 | `DynamicVar.BaseValue`（setter） | 修改数值变量基础值（自动刷新预览值） | Resilience/Stick |
 | `EnchantmentStatus.Normal / Disabled` | 附魔状态：置灰图标、隐藏追加文本 | Stick（Glam 同用法） |
-| `Card.CombatState.HittableEnemies` | 当前全体可攻击敌人 | Weakening/Serrated |
+| `Card.CombatState.HittableEnemies` | 当前全体可攻击敌人 | Weakening/Serrated/Catalyze |
 | `HoverTipFactory.FromKeyword / FromPower<T> / FromOrb<T> / FromForge() / Static(StaticHoverTip.X)` | 悬停提示工厂 | 各附魔 |
 | `ModelDb.DebugEnchantments` | 全量附魔枚举（含 Mod 附魔；含 Deprecated/Mocks 占位类需排除） | RandomEnchantService（随机附魔权重表构建与候选筛选，方案见 Plan/RandomEnchantment.md） |
 | `CardCmd.TransformToRandom(card, rng)` → `CardPileAddResult{success, cardAdded}` | 原牌堆原位随机变化（选项经稀有度/战斗可生成过滤，参考 EntropyPower） | Pandora |
@@ -363,7 +371,7 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 
 ## 7. 附魔栏位上限（功能块 E：一卡多附魔）
 
-实现文件：`Scripts/Data/EnchantLimitService.cs`（公开 API + RunSavedData）、`Scripts/Data/ExtraEnchantmentStore.cs`（附加槽存储/持久化）、`Scripts/Patches/EnchantmentLimitPatch.cs`（模型层 12 补丁）、`EnchantNumericFoldPatch.cs`（数值 fold transpiler）、`EnchantOnPlayDispatchPatch.cs`（OnPlay transpiler）、`EnchantmentLimitUiPatch.cs`（卡面多图标）。方案设计见 `Plan/EnchantmentLimit.md`。
+实现文件：`Scripts/Data/EnchantLimitService.cs`（公开 API + RunSavedData）、`Scripts/Data/ExtraEnchantmentStore.cs`（附加槽存储/持久化）、`Scripts/Patches/EnchantmentLimitPatch.cs`（模型层补丁组）、`EnchantNumericFoldPatch.cs`（数值 fold transpiler）、`EnchantOnPlayDispatchPatch.cs`（OnPlay transpiler）、`EnchantmentBottomOfDrawPilePatch.cs`（M12 首回合沉底）、`EnchantmentLimitUiPatch.cs`（卡面多图标）。方案设计见 `Plan/EnchantmentLimit.md`。
 
 ### 核心架构
 
@@ -377,11 +385,12 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 - **「忽略占用」评估**：暂时置空主槽背字段 `<Enchantment>k__BackingField`（PrivateAccess）后调真实 `CanEnchant`——派生类自定义条件走原始代码路径，结果精确；同型规则单独判（任一槽同型 → 仅 IsStackable 允许堆叠）。
 - **数值链 fold（transpiler 替换调用点）**：`Hook.ModifyDamage/ModifyBlock`、`CardModel.GetEnchantedReplayCount`、6 个 DynamicVar 预览类中对 `EnchantmentModel.Enchant{Damage,Block}{Additive,Multiplicative}/EnchantPlayCount` 的 callvirt 被替换为静态 fold 助手（堆栈效果一致：实例作为 arg0）。加性 fold 返回总增量、乘性返回总因子、PlayCount 逐槽折叠——单点补丁即覆盖结算与卡面预览两条链。
 - **OnPlay 分发（transpiler，MethodType.Async）**：async 方法的 MoveNext 中 `Enchantment.OnPlay` 调用处替换为 fold（先主槽后附加槽，含 `InvokeExecutionFinished`），时机与原生一致（卡效果后、Affliction/AfterCardPlayed 前，每 replay 一次）。
+- **首回合沉底（M12，transpiler，MethodType.Async）**：`CombatManager.SetupPlayerTurn` 中对主槽 `ShouldStartAtBottomOfDrawPile` 的读取替换为全槽判定；主槽或任一附加槽返回 true 即将卡牌沉底，供 SetUp 使用。
 - **钩子广播**：`CombatState.IterateHookListeners` / `RunState.IterateHookListeners` postfix，在主槽附魔之后按槽序插入附加槽；资格过滤自管（`HasCard && !Card.HasBeenRemovedFromState && Owner.IsActiveForHooks`，与原生 `Contains` 同规则）。
 - **持久化**：附加槽编码 `"CAT.ENTRY:Amount;..."` 存 `SavedAttachedState<CardModel, string>`（桥接 `SavedProperties`，JSON/联机二进制兼容；`ModelId.ToString()`="CAT.ENTRY"，`ModelId.Deserialize` 还原）。读档在 `CardModel.FromSerializable` postfix 恢复（`SaveUtil.EnchantmentOrDeprecated` + ApplyInternal + ModifyCard，在原版主槽与升级重放之后）；克隆在 `AbstractModel.MutableClone` postfix 迁移（ClonePreservingMutability + ApplyInternal，不重放 ModifyCard）。
 - **UI 即时刷新**：`EnchantmentChanged` 事件无法外部触发（event），用 PrivateAccess 读背字段委托直接 Invoke（等效原生 EnchantInternal 末尾）。
 - **卡面多图标**：`NCard.UpdateEnchantmentVisuals`（private）postfix，Duplicate `%Enchantment` tab 后**挂为主槽 tab 的子节点、竖排在其下方**（跟随主槽显隐与星标上移；vfx 隐藏主槽时附加槽自动隐藏）。复制的 tab 共享 ShaderMaterial 须 `Material.Duplicate()` 独立化（置灰参数 h/s/v 为 NCard 私有静态 StringName，PrivateAccess 读取）；**复制模板优先选首个附加槽 tab，不能直接 Duplicate 挂了附加槽的主槽 tab**（会把既有附加槽一起复制进去造成嵌套重复图标）；附加槽 `StatusChanged` 自管订阅（原生 `_subscribedEnchantment` 单订阅会抛异常）；`OnReturnedFromPool`/`OnFreedToPool` 时销毁复制 tab 防对象池串卡。
-- **已知裁剪**：M12（首回合 `ShouldStartAtBottomOfDrawPile` 沉底覆盖附加槽）未实现——原版仅 Imbued 使用该属性，本 Mod 及商店池引用的附魔均不涉及；`NDeckHistoryEntry`/`NCardEnchantVfx` 仍只显示主槽（显示层降级，逻辑不受影响）；`NEnchantPreview` 已由 `EnchantLimitPreviewPatch` 适配多槽（新附魔以附加槽附着到预览克隆）。
+- **已知裁剪**：`NDeckHistoryEntry`/`NCardEnchantVfx` 仍只显示主槽（显示层降级，逻辑不受影响）；`NEnchantPreview` 已由 `EnchantLimitPreviewPatch` 适配多槽（新附魔以附加槽附着到预览克隆）。
 - **可堆叠放开**：`StackableEnchantmentPatch` 对 `EnchantmentModel.IsStackable` getter 做 postfix——`ShowAmount` 为 true 的附魔（含原版，sealed 不可覆写）统一视为可堆叠；本 Mod 附魔走基类覆写 `IsStackable => ShowAmount`（getter 不经过基类，不吃该补丁）。同型堆叠路由见 `EnchantLimitEnchantCommandPatch`（主槽同型走原生堆叠、附加槽同型走 `StackAmount`），同型永不占新槽。
 - **菲涅耳透镜去重（堆叠放开的副作用修复）**：原版"掉落展示施加（`TryModifyCardRewardOptionsLate`/`ModifyMerchantCardCreationResults`）+ 入组施加（`TryModifyCardBeingAddedToDeck`）"两段式遗物，靠"同型非堆叠时 `CanEnchant` 拒绝"隐含去重；堆叠放开后会重复施加并叠层。`FresnelLensCompatPatch`（prefix）显式恢复：卡已有该附魔（任一槽位，`EnchantLimitService.HasSameTypeEnchantment`）时跳过入组钩子，未持有时走原生——展示与入组两个特性保留，最终只施加一次。同类原版遗物只此一个（蛋类遗物是升级非附魔，无此问题）。
 
@@ -394,7 +403,7 @@ foreach (CardModel card in await CardSelectCmd.FromDeckForEnchantment(Owner, can
 
 ## 8. 遗留注意事项
 
-- **商店栏位实机验证**：商店附魔遗物池已加入 19 个遗物（功能激活）；需实机检查：3 个栏位在药水下方、同店不重复、跨商店可重复、购买/售出隐藏正常、读档后栏位内容不变、75/125/175 定价生效。栏位坐标烘焙在 tscn 中，若新行超出屏幕需调整 `ShopUiSlotsPatch` 的行距推算。
+- **商店栏位实机验证**：商店附魔遗物池已加入 21 个遗物（功能激活）；需实机检查：3 个栏位在药水下方、同店不重复、跨商店可重复、购买/售出隐藏正常、读档后栏位内容不变、75/125/175 定价生效。栏位坐标烘焙在 tscn 中，若新行超出屏幕需调整 `ShopUiSlotsPatch` 的行距推算。
 - **附魔移除不回滚**：`ClearEnchantmentInternal` 只解除引用，`OnEnchant` 加的关键词/费用修改会残留。功能块 D（驱散之泉事件）实现移除时，需自行 `RemoveKeyword` / 重置费用（参考 `CardModel.DowngradeInternal` 的重置+重放模式）。
 - **Stick 与重放的交互**：重放序列中每次打出都会计数，次数用尽后当次序列的后续打出不再回手（符合"前 Amount 次"语义）。
 - **Weakening/Serrated 与自指目标**：攻击牌目标默认为敌人；若未来出现 `TargetType.Self` 的攻击牌，`cardPlay.Target` 可能是友方，届时需加目标阵营判断。

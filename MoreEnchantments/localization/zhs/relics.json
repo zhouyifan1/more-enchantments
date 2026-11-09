@@ -124,5 +124,14 @@
   "MORE_ENCHANTMENTS_RELIC_FRUIT_CAKE.flavor": "*彩虹效果！*",
   "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.title": "玉佩",
   "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]替死[/gold]{EnchantAmount}层。牌组中没有「替死」牌时失效。",
-  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.flavor": "长得方方正正的，看着像一个方形的人，不像是这个世界的产物。"
+  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.flavor": "长得方方正正的，看着像一个方形的人，不像是这个世界的产物。",
+  "MORE_ENCHANTMENTS_RELIC_CATALYST.title": "催化剂",
+  "MORE_ENCHANTMENTS_RELIC_CATALYST.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]催化[/gold]{EnchantAmount}层。",
+  "MORE_ENCHANTMENTS_RELIC_CATALYST.flavor": "放了不知道多少年，还有效果吗？",
+  "MORE_ENCHANTMENTS_RELIC_TRAP_MODEL.title": "捕兽夹模型",
+  "MORE_ENCHANTMENTS_RELIC_TRAP_MODEL.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]部署[/gold]{EnchantAmount}层。",
+  "MORE_ENCHANTMENTS_RELIC_TRAP_MODEL.flavor": "你出于好奇心把手指放上去……嗷！",
+  "MORE_ENCHANTMENTS_RELIC_EMPTY_BOTTLE.title": "空瓶子",
+  "MORE_ENCHANTMENTS_RELIC_EMPTY_BOTTLE.description": "拾起时，从你的牌组中选择至多{Cards}张牌，为其附加[gold]瓶装[/gold]{EnchantAmount}层。",
+  "MORE_ENCHANTMENTS_RELIC_EMPTY_BOTTLE.flavor": "黄鹤一去不复返，白云千载空悠悠。"
 }

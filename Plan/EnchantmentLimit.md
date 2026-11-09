@@ -103,7 +103,7 @@ public static class EnchantLimitService
 | M9 | `PlayerCombatState.RecalculateCardValues` | postfix | 附加槽 `RecalculateValues()` |
 | M10 | `CardModel.DowngradeInternal` | postfix | 降级重置后重放附加槽 `ModifyCard()`（原版只重放主槽） |
 | M11 | `CardCmd.ClearEnchantment` | postfix | 主槽被清时晋升首个附加槽（仅迁移引用，不重放） |
-| M12 | `CombatManager` 首回合沉底（`ShouldStartAtBottomOfDrawPile`） | postfix | 附加槽同判 |
+| M12 | `CombatManager.SetupPlayerTurn` 首回合沉底（`ShouldStartAtBottomOfDrawPile`，async） | transpiler（`MethodType.Async`） | 已实现于 `EnchantmentBottomOfDrawPilePatch.cs`：主槽或任一附加槽请求沉底即生效，供 SetUp 使用 |
 | M13 | 历史记录 | M2 内 | 附加槽附着成功时补 `CardEnchantmentHistoryEntry`（与原生 444 行一致） |
 
 ---

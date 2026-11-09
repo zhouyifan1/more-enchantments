@@ -124,5 +124,14 @@
   "MORE_ENCHANTMENTS_RELIC_FRUIT_CAKE.flavor": "*Rainbow effect!*",
   "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.title": "Jade Pendant",
   "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Substitute[/gold] {EnchantAmount}. Disabled while no card in your deck has Substitute.",
-  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.flavor": "Square and angular, like a little square person. Not of this world."
+  "MORE_ENCHANTMENTS_RELIC_JADE_PENDANT.flavor": "Square and angular, like a little square person. Not of this world.",
+  "MORE_ENCHANTMENTS_RELIC_CATALYST.title": "Catalyst",
+  "MORE_ENCHANTMENTS_RELIC_CATALYST.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Catalyze[/gold] {EnchantAmount}.",
+  "MORE_ENCHANTMENTS_RELIC_CATALYST.flavor": "Who knows how long it has been sitting there. Does it still work?",
+  "MORE_ENCHANTMENTS_RELIC_TRAP_MODEL.title": "Trap Model",
+  "MORE_ENCHANTMENTS_RELIC_TRAP_MODEL.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]SetUp[/gold] {EnchantAmount}.",
+  "MORE_ENCHANTMENTS_RELIC_TRAP_MODEL.flavor": "You put your finger on it out of curiosity... ow!",
+  "MORE_ENCHANTMENTS_RELIC_EMPTY_BOTTLE.title": "Empty Bottle",
+  "MORE_ENCHANTMENTS_RELIC_EMPTY_BOTTLE.description": "On pickup, choose up to {Cards} cards from your deck and enchant them with [gold]Bottled[/gold] {EnchantAmount}.",
+  "MORE_ENCHANTMENTS_RELIC_EMPTY_BOTTLE.flavor": "The yellow crane is gone, never to return; white clouds drift aimlessly for a thousand years."
 }

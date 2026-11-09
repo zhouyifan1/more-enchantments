@@ -49,6 +49,7 @@ public class Entry
         limitPatcher.RegisterPatch<EnchantLimitClearEnchantmentPatch>();
         limitPatcher.RegisterPatch<EnchantLimitClonePatch>();
         limitPatcher.RegisterPatch<EnchantLimitDeserializePatch>();
+        limitPatcher.RegisterPatch<EnchantLimitBottomOfDrawPilePatch>();
         limitPatcher.RegisterPatch<EnchantLimitCardUiPatch>();
         limitPatcher.RegisterPatch<EnchantLimitCardPreviewPatch>();
         limitPatcher.RegisterPatch<EnchantLimitPreviewPatch>();
